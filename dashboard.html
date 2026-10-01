@@ -109,7 +109,10 @@
           <div class="sub">Assessment responses captured in real time · grouped by team</div>
         </div>
       </div>
-      <div class="badge"><span class="dot" id="liveDot"></span><span id="liveText">Connecting…</span></div>
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+        <div class="badge"><span class="dot" id="liveDot"></span><span id="liveText">Connecting…</span></div>
+        <button id="reportBtn" style="margin-top:0">Download Report</button>
+      </div>
     </div>
 
     <div id="gate" class="gate">
@@ -183,7 +186,91 @@
       <div class="muted" style="font-size:11px;margin-top:4px">Average score per pillar (0–70) · whiskers show lowest–highest participant · <span style="color:var(--ok)">green</span> = team strength · <span style="color:var(--bad)">red</span> = growth area</div>`;
   }
 
+  let lastData = null;
+
+  function pillarBand(v){
+    return v >= 63 ? "Load-Bearing" : v >= 49 ? "Reinforcing" : v >= 35 ? "Unstable" : "Fragile";
+  }
+
+  function buildReportHtml(d){
+    const gen = new Date().toLocaleString();
+    const clsBadge = c => `<span class="cb ${clsClass(c)}">${esc(c)}</span>`;
+    const teams = d.teams.map(t => {
+      const pillarRows = Object.entries(t.avgPillars).map(([k, v]) => `
+        <tr><td class="pk">${esc(k)}</td>
+        <td style="width:45%"><div class="rbar"><div style="width:${(v/70)*100}%"></div></div></td>
+        <td class="mono">${v.toFixed(1)} / 70</td>
+        <td>${pillarBand(v)}</td></tr>`).join("");
+      const rows = t.participants.map(p => `
+        <tr><td>${esc(p.name)}</td><td>${esc(p.role)}</td><td>${esc(p.unit)}</td>
+        <td class="mono">${p.answered} / ${p.totalQuestions}</td>
+        <td>${p.completedAt ? esc(p.total) + " / 490" : `<span class="muted">in progress</span>`}</td>
+        <td>${p.classification ? clsBadge(p.classification) : `<span class="muted">—</span>`}</td></tr>`).join("");
+      const clsBadges = Object.entries(t.classificationCounts)
+        .map(([c, n]) => clsBadge(c) + ` × ${n}`).join(" ");
+      return `<section class="team">
+        <h2>${esc(t.team)}</h2>
+        <p class="meta">${t.participantCount} participant(s) · avg total <b>${t.avgTotal.toFixed(1)} / 490</b> ${clsBadges}</p>
+        <h3>Pillar Scores</h3>
+        <table><thead><tr><th>Pillar</th><th>Average</th><th>Score</th><th>Condition</th></tr></thead><tbody>${pillarRows}</tbody></table>
+        <h3>Participants</h3>
+        <table><thead><tr><th>Name</th><th>Role</th><th>Unit</th><th>Progress</th><th>Total</th><th>Classification</th></tr></thead><tbody>${rows}</tbody></table>
+      </section>`;
+    }).join("");
+    return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>BUILT BY DESIGN™ — Team Results Report</title>
+<style>
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:#1a1d21; margin:36px auto; max-width:900px; padding:0 20px; line-height:1.5}
+  h1{font-size:20px; letter-spacing:.06em; margin:0}
+  .head{border-bottom:3px solid #c9a24b; padding-bottom:14px; margin-bottom:20px}
+  .head .sub{color:#667; font-size:12px}
+  .summary{display:flex; gap:18px; flex-wrap:wrap; margin-bottom:26px}
+  .summary div{border:1px solid #e2e2e2; border-radius:10px; padding:10px 16px}
+  .summary .n{font-size:22px; font-weight:800}
+  .summary .l{font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:#667}
+  h2{font-size:16px; color:#8a6d1f; margin:26px 0 4px}
+  h3{font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:#667; margin:18px 0 6px}
+  .meta{font-size:13px; color:#555; margin:0 0 4px}
+  table{width:100%; border-collapse:collapse; font-size:13px}
+  th,td{padding:8px 10px; border-bottom:1px solid #e5e5e5; text-align:left}
+  th{font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:#667}
+  .pk{text-transform:capitalize}
+  .mono{font-variant-numeric:tabular-nums; white-space:nowrap}
+  .cb{padding:2px 10px; border-radius:999px; font-size:11px; border:1px solid; white-space:nowrap}
+  .cb.ok{color:#2e6e43; border-color:#2e6e43}
+  .cb.warn{color:#8a6d1f; border-color:#8a6d1f}
+  .cb.bad{color:#a33a3a; border-color:#a33a3a}
+  .rbar{height:8px; background:#eee; border-radius:6px; overflow:hidden}
+  .rbar > div{height:100%; background:linear-gradient(90deg,#c9a24b,#e3c88b)}
+  .muted{color:#888}
+  .team{page-break-inside:avoid}
+  .foot{margin-top:36px; font-size:11px; color:#888; border-top:1px solid #e5e5e5; padding-top:10px}
+  @media print{ body{margin:0} }
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>BUILT BY DESIGN™ — TEAM RESULTS REPORT</h1>
+    <div class="sub">Organizational culture assessment · generated ${gen}</div>
+  </div>
+  <div class="summary">
+    <div><div class="n">${d.summary.participants}</div><div class="l">Participants</div></div>
+    <div><div class="n">${d.summary.completed}</div><div class="l">Completed</div></div>
+    <div><div class="n">${d.summary.inProgress}</div><div class="l">In Progress</div></div>
+    <div><div class="n">${d.summary.teams}</div><div class="l">Teams</div></div>
+  </div>
+  ${teams || `<p class="muted">No team data yet.</p>`}
+  <div class="foot">Pillar scores are 0–70 (10 items × 5-point scale, weighted ×1.4); total score is 0–490. Conditions: Fragile &lt;35 · Unstable 35–48 · Reinforcing 49–62 · Load-Bearing 63–70. Generated from live dashboard data at time of download.</div>
+</body>
+</html>`;
+  }
+
   function render(data){
+    lastData = data;
     document.getElementById("gate").style.display = "none";
     const board = document.getElementById("board");
     board.style.display = "";
@@ -273,6 +360,18 @@
 
   document.getElementById("unlockBtn").onclick = unlock;
   document.getElementById("keyInput").addEventListener("keydown", e => { if(e.key === "Enter") unlock(); });
+
+  document.getElementById("reportBtn").onclick = () => {
+    if(!lastData) return;
+    const blob = new Blob([buildReportHtml(lastData)], { type: "text/html" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `BbD-Team-Results-${new Date().toISOString().slice(0,10)}.html`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
 
   if(key){
     poll();
