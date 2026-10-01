@@ -172,8 +172,8 @@
       const pillars = Object.entries(t.avgPillars).map(([k, v]) => `
         <div class="picon">
           <div class="nm">${esc(k)}</div>
-          <div class="sc">${v.toFixed(1)}<span class="muted" style="font-size:11px">/50</span></div>
-          <div class="bar"><div style="width:${(v/50)*100}%"></div></div>
+          <div class="sc">${v.toFixed(1)}<span class="muted" style="font-size:11px">/70</span></div>
+          <div class="bar"><div style="width:${(v/70)*100}%"></div></div>
         </div>`).join("");
       const rows = t.participants.map(p => `
         <tr>
@@ -181,7 +181,7 @@
           <td>${esc(p.role)}</td>
           <td>${esc(p.unit)}</td>
           <td class="progress">${p.answered} / ${p.totalQuestions}</td>
-          <td>${p.completedAt ? esc(p.total) + " / 350" : `<span class="muted">in progress</span>`}</td>
+          <td>${p.completedAt ? esc(p.total) + " / 490" : `<span class="muted">in progress</span>`}</td>
           <td>${p.classification ? `<span class="cls ${clsClass(p.classification)}">${esc(p.classification)}</span>` : `<span class="muted">—</span>`}</td>
           <td class="progress">${fmtTime(p.updatedAt)}</td>
         </tr>`).join("");
@@ -190,7 +190,7 @@
       card.innerHTML = `
         <div class="teamHead">
           <div class="teamName">${esc(t.team)}</div>
-          <div>${t.participantCount} participant(s) · avg total <b>${t.avgTotal.toFixed(1)}</b> / 350 ${clsBadges}</div>
+          <div>${t.participantCount} participant(s) · avg total <b>${t.avgTotal.toFixed(1)}</b> / 490 ${clsBadges}</div>
         </div>
         <div class="pillars">${pillars}</div>
         <table>

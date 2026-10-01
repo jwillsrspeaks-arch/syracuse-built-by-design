@@ -28,4 +28,4 @@ Dashboard: open /dashboard, passcode from the DASHBOARD_PASSWORD secret.
 - Frontend state keys: `bbd_team_roster_v1`, `bbd_current_draft_v1`, `bbd_session_id_v1`.
 - Server sync is save-on-navigation (Next/Back/Jump/Exit/final question); radio clicks alone do not sync.
 - Question bank `BBD_BANK` renders wording per lens (athletic/education/corporate/church).
-- Scoring rules are duplicated in api/main.py (classification thresholds 170/260) — keep in sync with index.html.
+- Scoring: answers are 1–5, weighted ×1.4 → 70 pts per pillar, 490 total (classification 238/364, pillar bands 35/49/63). Rules duplicated in api/main.py — keep in sync with index.html. Pre-v2 roster records and server rows are migrated/rescored automatically.

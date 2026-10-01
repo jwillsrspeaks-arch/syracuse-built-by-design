@@ -452,7 +452,7 @@
         <div class="scoregrid">
           <div class="stat">
             <div class="l">Total Score</div>
-            <div class="n"><span id="totalScore">0</span> <span class="muted" style="font-size:14px">/ 350</span></div>
+            <div class="n"><span id="totalScore">0</span> <span class="muted" style="font-size:14px">/ 490</span></div>
             <div class="scoreBar"><div class="scoreFill" id="scoreFill"></div></div>
             <div class="segments">
               <div>Built by Default</div>
@@ -544,7 +544,7 @@
         <div class="scoregrid">
           <div class="stat">
             <div class="l">Average Total Score</div>
-            <div class="n"><span id="teamAvg">0</span> <span class="muted" style="font-size:14px">/ 350</span></div>
+            <div class="n"><span id="teamAvg">0</span> <span class="muted" style="font-size:14px">/ 490</span></div>
             <div class="small">Std Dev (consistency): <span id="teamSd">0</span></div>
           </div>
           <div class="stat">
@@ -835,15 +835,15 @@ const BBD_BANK = {
   "narrativeMap":{
     "rules":{
       "classification":{
-        "builtByDefault":{"min":0,"max":169,"label":"Built by Default"},
-        "underConstruction":{"min":170,"max":259,"label":"Under Construction"},
-        "builtByDesign":{"min":260,"max":350,"label":"Built by Design"}
+        "builtByDefault":{"min":0,"max":237,"label":"Built by Default"},
+        "underConstruction":{"min":238,"max":363,"label":"Under Construction"},
+        "builtByDesign":{"min":364,"max":490,"label":"Built by Design"}
       },
       "pillarCondition":[
-        {"min":10,"max":24,"label":"Fragile"},
-        {"min":25,"max":34,"label":"Unstable"},
-        {"min":35,"max":44,"label":"Reinforcing"},
-        {"min":45,"max":50,"label":"Load-Bearing"}
+        {"min":14,"max":34,"label":"Fragile"},
+        {"min":35,"max":48,"label":"Unstable"},
+        {"min":49,"max":62,"label":"Reinforcing"},
+        {"min":63,"max":70,"label":"Load-Bearing"}
       ]
     },
     "pillarFailureNarratives":{
@@ -982,7 +982,21 @@ function uid(){
   return "id_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
 }
 function getRoster(){
-  return JSON.parse(localStorage.getItem(TEAM_KEY) || "[]");
+  const list = JSON.parse(localStorage.getItem(TEAM_KEY) || "[]");
+  // Migrate records saved on the old 50/350 scale to the 70/490 scale
+  let migrated = false;
+  for(const r of list){
+    if(r.scores && r.scores.total > 0 && !r.scores.scale){
+      r.scores.total = Math.round(r.scores.total * 1.4);
+      const ps = {};
+      for(const k of Object.keys(r.scores.pillars || {})) ps[k] = Math.round(r.scores.pillars[k] * 1.4);
+      r.scores.pillars = ps;
+      r.scores.scale = "v2-490";
+      migrated = true;
+    }
+  }
+  if(migrated) localStorage.setItem(TEAM_KEY, JSON.stringify(list));
+  return list;
 }
 function saveRoster(list){
   localStorage.setItem(TEAM_KEY, JSON.stringify(list));
@@ -1106,7 +1120,8 @@ function computeScores(){
   const scores = {};
   let total = 0;
   for(const p of BBD_BANK.pillars){
-    const sc = sum(state.answers[p.key].map(v => +v||0));
+    // 10 questions x 5-point Likert, weighted x1.4 -> 70 pts per pillar, 490 total
+    const sc = Math.round(sum(state.answers[p.key].map(v => +v||0)) * 1.4);
     scores[p.key] = sc;
     total += sc;
   }
@@ -1417,10 +1432,10 @@ function buildResults(){
   dot.classList.remove("ok","warn","bad");
   dot.classList.add(classificationDot(cls));
 
-  $("scoreFill").style.width = `${(total/350)*100}%`;
+  $("scoreFill").style.width = `${(total/490)*100}%`;
 
-  $("weakPillar").textContent = `${BBD_BANK.pillars.find(p=>p.key===weak).label} (${scores[weak]}/50)`;
-  $("strongPillar").textContent = `${BBD_BANK.pillars.find(p=>p.key===strong).label} (${scores[strong]}/50)`;
+  $("weakPillar").textContent = `${BBD_BANK.pillars.find(p=>p.key===weak).label} (${scores[weak]}/70)`;
+  $("strongPillar").textContent = `${BBD_BANK.pillars.find(p=>p.key===strong).label} (${scores[strong]}/70)`;
 
   // pillar tiles
   const row = $("pillarsRow");
@@ -1433,7 +1448,7 @@ function buildResults(){
         ${iconSVG(p.key)}
         <div>
           <div class="name">${p.label}</div>
-          <div class="score">${scores[p.key]} <span class="muted" style="font-size:12px">/50</span></div>
+          <div class="score">${scores[p.key]} <span class="muted" style="font-size:12px">/70</span></div>
           <div class="small">Condition: <b>${pillarCondition(scores[p.key])}</b></div>
         </div>
       </div>
@@ -1503,6 +1518,7 @@ function saveRespondentRecord(){
     respondent: {...state.respondent},
     answers: JSON.parse(JSON.stringify(state.answers)),
     scores: {
+      scale: "v2-490",
       total,
       classification: cls,
       pillars: scores,
@@ -1531,7 +1547,7 @@ function buildReportFromCurrent(){
   $("rOrg").textContent = state.orgName || "—";
   $("rAudience").textContent = state.audienceType || "—";
   $("rMode").textContent = MODE;
-  $("rCls").textContent = `${cls} · Total ${total}/350`;
+  $("rCls").textContent = `${cls} · Total ${total}/490`;
   $("rSummary").textContent = executiveSummaryText(cls, weak, MODE);
   $("rPressure").textContent = BBD_BANK.narrativeMap.pillarFailureNarratives[weak][MODE] || "—";
 
@@ -1546,7 +1562,7 @@ function buildReportFromCurrent(){
     div.style.marginTop = "12px";
     div.className = "callout";
     div.innerHTML = `
-      <div class="mini">${p.label.toUpperCase()} · ${sc}/50 · ${cond}</div>
+      <div class="mini">${p.label.toUpperCase()} · ${sc}/70 · ${cond}</div>
       <div class="small" style="margin-top:6px"><b>Key Insight:</b> ${sc<35 ? "This pillar is currently a weak load point. Under pressure, drift will show here first." : "This pillar is reinforcing the structure, but consistency must be protected under pressure."}</div>
       <div class="small" style="margin-top:6px"><b>Risks:</b> ${sc<25 ? "High risk of breakdown under pressure, misalignment, and inconsistent outcomes." : sc<35 ? "Moderate risk of drift and inconsistency as load increases." : "Lower risk, but drift can return if standards slip."}</div>
       <div class="small" style="margin-top:6px"><b>Priority Actions:</b>
@@ -1611,8 +1627,8 @@ function refreshTeam(){
 
   const weakLabel = BBD_BANK.pillars.find(p=>p.key===agg.weakestAvg)?.label || agg.weakestAvg;
   const strongLabel = BBD_BANK.pillars.find(p=>p.key===agg.strongestAvg)?.label || agg.strongestAvg;
-  $("teamWeak").textContent = `${weakLabel} (${agg.pillarAvgs[agg.weakestAvg].toFixed(1)}/50)`;
-  $("teamStrong").textContent = `${strongLabel} (${agg.pillarAvgs[agg.strongestAvg].toFixed(1)}/50)`;
+  $("teamWeak").textContent = `${weakLabel} (${agg.pillarAvgs[agg.weakestAvg].toFixed(1)}/70)`;
+  $("teamStrong").textContent = `${strongLabel} (${agg.pillarAvgs[agg.strongestAvg].toFixed(1)}/70)`;
 
   // narrative uses correct lens: take majority lens among filtered? We'll use current effective mode (from welcome audience).
   // Better: if org uses multiple audiences, use "corporate" fallback. Here we use effectiveMode().
@@ -1630,7 +1646,7 @@ function refreshTeam(){
         ${iconSVG(p.key)}
         <div>
           <div class="name">${p.label} (avg)</div>
-          <div class="score">${agg.pillarAvgs[p.key].toFixed(1)} <span class="muted" style="font-size:12px">/50</span></div>
+          <div class="score">${agg.pillarAvgs[p.key].toFixed(1)} <span class="muted" style="font-size:12px">/70</span></div>
           <div class="small">Condition: <b>${pillarCondition(Math.round(agg.pillarAvgs[p.key]))}</b></div>
         </div>
       </div>

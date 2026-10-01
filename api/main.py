@@ -22,10 +22,13 @@ PILLAR_KEYS = [
     "stewardship", "adaptability", "succession",
 ]
 
+# 10 questions x 5-point Likert per pillar, weighted x1.4 -> 70/pillar, 490 total
+WEIGHT = 1.4
+
 CLASSIFICATION_RULES = [
-    (260, 350, "Built by Design"),
-    (170, 259, "Under Construction"),
-    (0, 169, "Built by Default"),
+    (364, 490, "Built by Design"),
+    (238, 363, "Under Construction"),
+    (0, 237, "Built by Default"),
 ]
 
 SCHEMA = """
@@ -71,12 +74,12 @@ def classification(total: int) -> str:
 
 
 def score_answers(answers: Dict[str, Any]):
-    """Pillar sums (10-50), total (max 350), answered count."""
+    """Pillar sums (max 70 each, weighted x1.4), total (max 490), answered count."""
     pillar_scores = {}
     answered = 0
     for key in PILLAR_KEYS:
         values = [v for v in (answers.get(key) or []) if isinstance(v, (int, float))]
-        pillar_scores[key] = int(sum(values))
+        pillar_scores[key] = round(sum(values) * WEIGHT)
         answered += len(values)
     total = int(sum(pillar_scores.values()))
     return pillar_scores, total, answered, classification(total)
