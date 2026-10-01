@@ -1,0 +1,1681 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>BUILT BY DESIGN™ — Digital Assessment + Report (Single File)</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#111824;
+      --panel2:#0f1621;
+      --text:#f2f4f7;
+      --muted:#9aa6b2;
+      --line:rgba(255,255,255,.10);
+      --gold:#d7b46a;
+      --danger:#b35a5a;
+      --ok:#6ea77a;
+      --shadow: 0 18px 45px rgba(0,0,0,.45);
+      --radius:16px;
+      --radius2:12px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:radial-gradient(1200px 800px at 20% 0%, rgba(215,180,106,.10), transparent 60%),
+              radial-gradient(1000px 700px at 90% 20%, rgba(110,167,122,.08), transparent 55%),
+              linear-gradient(180deg, #070a0f, var(--bg));
+      color:var(--text); font-family:var(--sans);
+    }
+    /* subtle “architectural” texture */
+    body:before{
+      content:""; position:fixed; inset:0; pointer-events:none; opacity:.12;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size: 80px 80px;
+      mix-blend-mode: overlay;
+    }
+    a{color:inherit}
+    .wrap{max-width:1180px; margin:0 auto; padding:28px 18px 80px}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:14px;
+      padding:16px 18px; border:1px solid var(--line); border-radius:18px;
+      background:linear-gradient(180deg, rgba(17,24,36,.86), rgba(10,14,20,.72));
+      box-shadow:var(--shadow);
+      position:sticky; top:12px; z-index:10; backdrop-filter: blur(10px);
+    }
+    .brand{
+      display:flex; gap:14px; align-items:center; min-width:240px;
+    }
+    .mark{
+      width:44px; height:44px; border-radius:12px;
+      border:1px solid rgba(215,180,106,.45);
+      background:
+        radial-gradient(circle at 30% 30%, rgba(215,180,106,.30), transparent 60%),
+        linear-gradient(180deg, rgba(215,180,106,.16), rgba(0,0,0,.0));
+      position:relative;
+    }
+    .mark:after{
+      content:""; position:absolute; inset:9px;
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:10px;
+    }
+    .brand h1{margin:0; font-family:var(--serif); letter-spacing:.02em; font-size:18px}
+    .brand .sub{font-size:12px; color:var(--muted); margin-top:2px}
+    .nav{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+    .chip{
+      border:1px solid var(--line);
+      background:rgba(17,24,36,.55);
+      color:var(--text);
+      padding:9px 10px; border-radius:999px;
+      font-size:12px; cursor:pointer; user-select:none;
+      transition:.15s transform ease, .15s background ease, .15s border-color ease;
+    }
+    .chip:hover{transform:translateY(-1px); border-color:rgba(215,180,106,.35)}
+    .chip.active{border-color:rgba(215,180,106,.55); background:rgba(215,180,106,.10)}
+    .grid{display:grid; grid-template-columns: 1.2fr .8fr; gap:16px; margin-top:16px}
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+    .panel{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(17,24,36,.70), rgba(10,14,20,.62));
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+    .panelTitle{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+      padding-bottom:12px; border-bottom:1px solid var(--line);
+      margin-bottom:14px;
+    }
+    .panelTitle h2{
+      margin:0; font-family:var(--serif); font-size:18px; letter-spacing:.02em
+    }
+    .panelTitle .meta{color:var(--muted); font-size:12px; line-height:1.3}
+    .kicker{
+      font-family:var(--mono); letter-spacing:.12em;
+      font-size:11px; color:rgba(215,180,106,.90);
+    }
+    label{display:block; font-size:12px; color:var(--muted); margin:12px 0 6px}
+    input,select,textarea{
+      width:100%; background:rgba(10,14,20,.55);
+      border:1px solid var(--line); color:var(--text);
+      border-radius:12px; padding:10px 11px;
+      outline:none;
+    }
+    textarea{min-height:90px; resize:vertical}
+    input:focus,select:focus,textarea:focus{border-color:rgba(215,180,106,.55)}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    @media (max-width: 720px){ .row{grid-template-columns:1fr} }
+    .btnbar{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px}
+    button{
+      appearance:none; border:none; cursor:pointer;
+      padding:10px 12px; border-radius:12px;
+      font-weight:600; font-size:13px;
+      background:rgba(215,180,106,.14);
+      color:var(--text);
+      border:1px solid rgba(215,180,106,.40);
+      transition:.15s transform ease, .15s filter ease;
+    }
+    button:hover{transform:translateY(-1px); filter:brightness(1.08)}
+    button.secondary{
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      color:var(--text);
+    }
+    button.danger{
+      background:rgba(179,90,90,.12);
+      border:1px solid rgba(179,90,90,.35);
+    }
+    .hint{font-size:12px; color:var(--muted); margin-top:8px; line-height:1.4}
+    .hr{height:1px; background:var(--line); margin:14px 0}
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid rgba(255,255,255,.16);
+      padding:7px 10px; border-radius:999px;
+      font-size:12px;
+      background:rgba(10,14,20,.35);
+    }
+    .dot{width:9px; height:9px; border-radius:99px; background:var(--muted)}
+    .dot.ok{background:var(--ok)}
+    .dot.warn{background:var(--gold)}
+    .dot.bad{background:var(--danger)}
+    .progressWrap{
+      margin-top:14px; border:1px solid var(--line); border-radius:14px;
+      overflow:hidden; background:rgba(10,14,20,.35);
+    }
+    .progressBar{
+      height:12px;
+      background:linear-gradient(90deg, rgba(215,180,106,.85), rgba(215,180,106,.25));
+      width:0%;
+    }
+    .questionCard{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(15,22,33,.70), rgba(10,14,20,.62));
+      border-radius:var(--radius);
+      padding:16px;
+      box-shadow:0 12px 30px rgba(0,0,0,.35);
+    }
+    .qTop{display:flex; align-items:flex-start; justify-content:space-between; gap:12px}
+    .qMeta{font-size:12px; color:var(--muted); line-height:1.4}
+    .qText{
+      margin:10px 0 8px; font-size:16px; line-height:1.35;
+      letter-spacing:.01em;
+    }
+    .likert{
+      display:grid; grid-template-columns: repeat(5, 1fr);
+      gap:8px; margin-top:10px;
+    }
+    .likert label{
+      margin:0; padding:10px 8px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:rgba(10,14,20,.45);
+      cursor:pointer; text-align:center;
+      font-size:12px; color:var(--text);
+    }
+    .likert input{display:none}
+    .likert input:checked + label{
+      border-color:rgba(215,180,106,.60);
+      background:rgba(215,180,106,.14);
+      box-shadow: 0 0 0 2px rgba(215,180,106,.10) inset;
+    }
+    .scaleLabels{display:flex; justify-content:space-between; color:var(--muted); font-size:11px; margin-top:6px}
+    .scoregrid{display:grid; grid-template-columns: repeat(2, 1fr); gap:12px}
+    @media (max-width: 720px){ .scoregrid{grid-template-columns:1fr} }
+    .stat{
+      border:1px solid var(--line);
+      border-radius:14px; padding:12px;
+      background:rgba(10,14,20,.35);
+    }
+    .stat .n{font-family:var(--serif); font-size:28px; margin-top:6px}
+    .stat .l{font-size:12px; color:var(--muted)}
+    .scoreBar{
+      border:1px solid var(--line);
+      border-radius:14px; overflow:hidden; background:rgba(10,14,20,.35);
+      margin-top:10px;
+    }
+    .scoreFill{height:14px; width:0%; background:linear-gradient(90deg, rgba(179,90,90,.55), rgba(215,180,106,.75), rgba(110,167,122,.65))}
+    .segments{
+      display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0;
+      margin-top:8px; font-size:11px; color:var(--muted);
+    }
+    .segments div{padding:6px 0; text-align:center}
+    .pillarsRow{
+      display:grid; grid-template-columns: repeat(7, 1fr); gap:10px;
+      margin-top:14px;
+    }
+    @media (max-width: 980px){ .pillarsRow{grid-template-columns: repeat(2, 1fr)} }
+    .picon{
+      border:1px solid var(--line); border-radius:14px;
+      padding:10px; background:rgba(10,14,20,.35);
+      display:flex; flex-direction:column; gap:8px;
+      align-items:flex-start;
+    }
+    .picon .name{font-size:12px; color:var(--muted)}
+    .picon .score{font-family:var(--serif); font-size:20px}
+    .mini{font-family:var(--mono); font-size:10px; letter-spacing:.12em; color:rgba(215,180,106,.9)}
+    .svg{
+      width:26px; height:26px; opacity:.92;
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,.4));
+    }
+    .report{
+      margin-top:16px;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(15,22,33,.74), rgba(10,14,20,.62));
+      padding:16px;
+    }
+    .report h3{margin:0 0 8px; font-family:var(--serif)}
+    .callout{
+      border-left:3px solid rgba(215,180,106,.70);
+      padding:10px 12px; background:rgba(215,180,106,.07);
+      border-radius:12px;
+      color:var(--text);
+    }
+    ul{margin:8px 0 0 20px; color:var(--text)}
+    li{margin:6px 0}
+    .small{font-size:12px; color:var(--muted); line-height:1.45}
+    .table{
+      width:100%; border-collapse:collapse; margin-top:10px;
+      font-size:12px;
+    }
+    .table th, .table td{
+      border-bottom:1px solid var(--line);
+      padding:8px 8px; text-align:left;
+    }
+    .table th{color:var(--muted); font-weight:600}
+    .muted{color:var(--muted)}
+    .right{display:flex; justify-content:flex-end}
+    .hidden{display:none !important}
+
+    /* PRINT */
+    @media print{
+      body{background:#fff !important; color:#000}
+      body:before{display:none !important}
+      .topbar, .noPrint{display:none !important}
+      .wrap{max-width:100%; padding:0}
+      .panel, .questionCard, .report{box-shadow:none !important; border-color:#bbb !important}
+      .panel{background:#fff !important}
+      .questionCard{background:#fff !important}
+      .report{background:#fff !important}
+      .kicker, .mini{color:#444 !important}
+      .muted, .panelTitle .meta, .qMeta, label, .small{color:#333 !important}
+      .badge{border-color:#999 !important}
+      .scoreFill{background:#888 !important}
+      .mark{border-color:#999 !important}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar noPrint">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"></div>
+      <div>
+        <h1>BUILT BY DESIGN™ <span class="muted" style="font-weight:400">— Digital Assessment</span></h1>
+        <div class="sub">Jeff Williams, Sr. | THE ARCHITECT® — “Designing systems that perform under extreme pressure.”</div>
+      </div>
+    </div>
+    <div class="nav">
+      <div class="chip active" id="tabWelcome">Welcome</div>
+      <div class="chip" id="tabAssess">Assessment</div>
+      <div class="chip" id="tabResults">Results</div>
+      <div class="chip" id="tabTeam">Team (A2)</div>
+      <div class="chip" id="tabReport">Report</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- MAIN -->
+    <div class="panel" id="mainPanel">
+      <!-- WELCOME -->
+      <div id="welcomePanel">
+        <div class="panelTitle">
+          <div>
+            <div class="kicker">STEP 1</div>
+            <h2>Welcome / Organization Info</h2>
+            <div class="small">Choose audience type to automatically switch wording: Athletic / Educational / Corporate (includes Nonprofits) / Church.</div>
+          </div>
+          <div class="meta">
+            <div class="badge"><span class="dot warn"></span><span id="modeBadge">Mode: Auto</span></div>
+          </div>
+        </div>
+
+        <label>Organization Name</label>
+        <input id="orgName" placeholder="e.g., Syracuse Football / District Name / Company / Church"/>
+
+        <div class="row">
+          <div>
+            <label>Audience Type</label>
+            <select id="audienceType">
+              <option value="School District">School District</option>
+              <option value="School">School</option>
+              <option value="Athletic Program">Athletic Program</option>
+              <option value="Business">Business</option>
+              <option value="Nonprofit">Nonprofit</option>
+              <option value="Church">Church</option>
+            </select>
+          </div>
+          <div>
+            <label>Language Lens (optional override)</label>
+            <select id="lensOverride">
+              <option value="auto">Auto (from Audience Type)</option>
+              <option value="athletic">Athletic</option>
+              <option value="education">Educational</option>
+              <option value="corporate">Corporate/Nonprofit</option>
+              <option value="church">Church</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Respondent Name (required for A2 multi-respondent)</label>
+            <input id="respName" placeholder="First Last"/>
+          </div>
+          <div>
+            <label>Role / Title (optional)</label>
+            <input id="respTitle" placeholder="e.g., Player, Coach, Principal, CEO, Pastor"/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Respondent Role (A2 filters)</label>
+            <select id="respRole">
+              <option value="Player">Player</option>
+              <option value="Coach">Coach</option>
+              <option value="Staff">Staff</option>
+              <option value="Leader">Leader</option>
+              <option value="Teacher">Teacher</option>
+              <option value="Volunteer">Volunteer</option>
+            </select>
+          </div>
+          <div>
+            <label>Unit / Department (optional)</label>
+            <select id="respUnit">
+              <option value="General">General</option>
+              <option value="Offense">Offense</option>
+              <option value="Defense">Defense</option>
+              <option value="Special Teams">Special Teams</option>
+              <option value="Administration">Administration</option>
+              <option value="Operations">Operations</option>
+              <option value="Ministry">Ministry</option>
+              <option value="Department A">Department A</option>
+              <option value="Department B">Department B</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Position Group / Team / Grade Band (optional)</label>
+            <input id="respGroup" placeholder="e.g., OL, WR, Middle School, HR, Youth Ministry"/>
+          </div>
+          <div>
+            <label>Jersey # / ID (optional)</label>
+            <input id="respJersey" placeholder="e.g., 3"/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Date (optional)</label>
+            <input id="respDate" type="date"/>
+          </div>
+          <div>
+            <label>Notes (optional)</label>
+            <input id="respNotes" placeholder="Anything you want captured for context"/>
+          </div>
+        </div>
+
+        <div class="btnbar">
+          <button id="startBtn">Start Assessment</button>
+          <button class="secondary" id="resumeBtn">Resume Draft</button>
+          <button class="secondary" id="resetDraftBtn">Reset Current Draft</button>
+        </div>
+
+        <div class="hr"></div>
+        <div class="small">
+          <b>A2 Team Collection:</b> Each completed assessment saves as a respondent record on this device. If you use multiple devices, export JSON from each device and import them into one “master” device for a combined team report.
+        </div>
+      </div>
+
+      <!-- ASSESSMENT -->
+      <div id="assessPanel" class="hidden">
+        <div class="panelTitle">
+          <div>
+            <div class="kicker">STEP 2</div>
+            <h2>Assessment</h2>
+            <div class="small">Likert scale: 1 (Strongly Disagree) → 5 (Strongly Agree). Autosaves locally.</div>
+          </div>
+          <div class="meta">
+            <div class="badge"><span class="dot warn"></span><span id="progressText">0 / 70</span></div>
+          </div>
+        </div>
+
+        <div class="progressWrap" aria-label="progress">
+          <div class="progressBar" id="progressBar"></div>
+        </div>
+
+        <div style="margin-top:14px" class="questionCard" id="questionCard">
+          <!-- question injected -->
+        </div>
+
+        <div class="btnbar">
+          <button class="secondary" id="prevBtn">Back</button>
+          <button id="nextBtn">Next</button>
+          <button class="secondary" id="jumpBtn">Jump to Pillar</button>
+          <button class="danger" id="exitBtn">Exit</button>
+        </div>
+
+        <div class="hint" id="autosaveHint">Autosave is ON.</div>
+      </div>
+
+      <!-- RESULTS (individual) -->
+      <div id="resultsPanel" class="hidden">
+        <div class="panelTitle">
+          <div>
+            <div class="kicker">STEP 3</div>
+            <h2>Results Dashboard — Executive Scorecard</h2>
+            <div class="small">Shows classification, total score, pillar scores, strongest pillar, weakest pillar (greatest drift), and narrative.</div>
+          </div>
+          <div class="meta">
+            <div class="badge"><span class="dot warn"></span><span id="clsBadge">Classification</span></div>
+          </div>
+        </div>
+
+        <div class="scoregrid">
+          <div class="stat">
+            <div class="l">Total Score</div>
+            <div class="n"><span id="totalScore">0</span> <span class="muted" style="font-size:14px">/ 350</span></div>
+            <div class="scoreBar"><div class="scoreFill" id="scoreFill"></div></div>
+            <div class="segments">
+              <div>Built by Default</div>
+              <div>Under Construction</div>
+              <div>Built by Design</div>
+            </div>
+          </div>
+          <div class="stat">
+            <div class="l">Greatest Drift (Weakest Pillar)</div>
+            <div class="n" style="font-size:22px" id="weakPillar">—</div>
+            <div class="l" style="margin-top:8px">Strongest Pillar</div>
+            <div class="n" style="font-size:22px" id="strongPillar">—</div>
+          </div>
+        </div>
+
+        <div class="pillarsRow" id="pillarsRow"></div>
+
+        <div class="report">
+          <h3>Pressure Profile — Where pressure will break down</h3>
+          <div class="callout" id="pressureNarrative">—</div>
+        </div>
+
+        <div class="btnbar">
+          <button id="saveRespondentBtn">Save Respondent (A2)</button>
+          <button class="secondary" id="toReportBtn">View Report</button>
+          <button class="secondary" id="newRespondentBtn">Start Next Respondent</button>
+          <button class="danger" id="clearAllBtn">Clear All Team Data (This Device)</button>
+        </div>
+
+        <div class="small">Note: “Save Respondent” stores the completed assessment as a record in this device’s local storage for team aggregation.</div>
+      </div>
+
+      <!-- TEAM (A2) -->
+      <div id="teamPanel" class="hidden">
+        <div class="panelTitle">
+          <div>
+            <div class="kicker">A2</div>
+            <h2>Team Dashboard — Aggregate Report</h2>
+            <div class="small">Combine 100+ responses. Filter by role/unit/group. Export/Import JSON to merge devices.</div>
+          </div>
+          <div class="meta">
+            <div class="badge"><span class="dot warn"></span><span id="teamCountBadge">0 Responses</span></div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Filter: Role</label>
+            <select id="filterRole">
+              <option value="ALL">All</option>
+              <option value="Player">Player</option>
+              <option value="Coach">Coach</option>
+              <option value="Staff">Staff</option>
+              <option value="Leader">Leader</option>
+              <option value="Teacher">Teacher</option>
+              <option value="Volunteer">Volunteer</option>
+            </select>
+          </div>
+          <div>
+            <label>Filter: Unit/Dept</label>
+            <select id="filterUnit">
+              <option value="ALL">All</option>
+              <option value="General">General</option>
+              <option value="Offense">Offense</option>
+              <option value="Defense">Defense</option>
+              <option value="Special Teams">Special Teams</option>
+              <option value="Administration">Administration</option>
+              <option value="Operations">Operations</option>
+              <option value="Ministry">Ministry</option>
+              <option value="Department A">Department A</option>
+              <option value="Department B">Department B</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Filter: Group (contains text)</label>
+        <input id="filterGroup" placeholder="e.g., WR, OL, Middle School, HR, Youth Ministry"/>
+
+        <div class="btnbar">
+          <button id="refreshTeamBtn">Refresh Dashboard</button>
+          <button class="secondary" id="exportJsonBtn">Export Responses (JSON)</button>
+          <button class="secondary" id="importJsonBtn">Import Responses (JSON)</button>
+          <input id="importFile" type="file" accept="application/json" class="hidden"/>
+          <button class="secondary" id="teamReportBtn">Print Team Report</button>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="scoregrid">
+          <div class="stat">
+            <div class="l">Average Total Score</div>
+            <div class="n"><span id="teamAvg">0</span> <span class="muted" style="font-size:14px">/ 350</span></div>
+            <div class="small">Std Dev (consistency): <span id="teamSd">0</span></div>
+          </div>
+          <div class="stat">
+            <div class="l">Greatest Drift (Avg Weakest Pillar)</div>
+            <div class="n" style="font-size:22px" id="teamWeak">—</div>
+            <div class="l" style="margin-top:8px">Strongest Pillar (Avg)</div>
+            <div class="n" style="font-size:22px" id="teamStrong">—</div>
+          </div>
+        </div>
+
+        <div class="pillarsRow" id="teamPillarsRow"></div>
+
+        <div class="report">
+          <h3>Aggregate Pressure Profile</h3>
+          <div class="callout" id="teamNarrative">—</div>
+          <div class="small" style="margin-top:10px">
+            This narrative is generated from the <b>average weakest pillar</b> using the correct industry voice (Athletic/Education/Corporate/Church).
+          </div>
+        </div>
+
+        <div class="hr"></div>
+        <div class="small"><b>Roster (filtered)</b></div>
+        <table class="table" id="rosterTable">
+          <thead>
+            <tr>
+              <th>Name</th><th>Role</th><th>Unit</th><th>Group</th><th>Total</th><th>Weakest</th><th>When</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+      </div>
+
+      <!-- REPORT (print-ready) -->
+      <div id="reportPanel" class="hidden">
+        <div class="panelTitle">
+          <div>
+            <div class="kicker">STEP 4</div>
+            <h2>Diagnostic Report (Print-Ready)</h2>
+            <div class="small">Use “Print / Save as PDF” for clean output. @media print formatting is included.</div>
+          </div>
+          <div class="meta">
+            <button class="secondary" onclick="window.print()">Print / Save as PDF</button>
+          </div>
+        </div>
+
+        <div id="printArea">
+          <!-- Cover -->
+          <div class="report">
+            <div class="mini">BUILT BY DESIGN™</div>
+            <h3 style="margin-top:6px">STRUCTURAL DIAGNOSTIC REPORT</h3>
+            <div class="small">Prepared for <b id="rOrg">—</b></div>
+            <div class="small">Audience: <span id="rAudience">—</span> · Lens: <span id="rMode">—</span></div>
+            <div class="hr"></div>
+            <div class="small">Footer: <b>Jeff Williams, Sr. | THE ARCHITECT®</b></div>
+          </div>
+
+          <!-- Executive Summary -->
+          <div class="report">
+            <h3>Executive Summary</h3>
+            <div class="badge"><span class="dot warn"></span><span id="rCls">—</span></div>
+            <div class="small" style="margin-top:10px" id="rSummary">
+              —
+            </div>
+
+            <div class="hr"></div>
+            <h3>Pressure Profile — Where pressure will break down</h3>
+            <div class="callout" id="rPressure">—</div>
+          </div>
+
+          <!-- Pillar Analysis -->
+          <div class="report">
+            <h3>Pillar Analysis</h3>
+            <div class="small">Pillars are presented in locked order: Intention → Structure → Standards → Execution → Stewardship → Adaptability → Succession.</div>
+            <div id="pillarCards"></div>
+          </div>
+
+          <!-- Roadmap -->
+          <div class="report">
+            <h3>Redesign Roadmap</h3>
+            <ol>
+              <li><b>Stabilize the weakest pillar</b> — reinforce the first load point where pressure will cause failure.</li>
+              <li><b>Reset core standards</b> — remove drift by making expectations visible, measurable, and non-negotiable.</li>
+              <li><b>Install execution rhythms</b> — cadence, review, accountability, and adjustment become the operating system.</li>
+              <li><b>Align leadership behaviors</b> — leadership must model the blueprint under pressure or the structure will crack.</li>
+            </ol>
+            <div class="small">Architect language is intentional: load, drift, reinforcement, blueprint, alignment, pressure testing.</div>
+          </div>
+
+        </div>
+
+        <div class="btnbar noPrint">
+          <button class="secondary" id="backToResultsBtn">Back to Results</button>
+          <button class="secondary" id="backToTeamBtn">Back to Team</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="panel noPrint" id="sidePanel">
+      <div class="panelTitle">
+        <div>
+          <div class="kicker">CONTROL</div>
+          <h2>System Controls</h2>
+          <div class="small">Everything runs locally. No internet. No server.</div>
+        </div>
+      </div>
+
+      <div class="badge"><span class="dot warn"></span><span id="deviceStatus">Local Storage: Ready</span></div>
+      <div class="hr"></div>
+
+      <div class="small">
+        <b>Current Lens:</b> <span id="currentLensText">—</span><br/>
+        <b>Respondent:</b> <span id="currentRespText">—</span><br/>
+        <b>Progress:</b> <span id="currentProgText">0 / 70</span>
+      </div>
+
+      <div class="hr"></div>
+      <div class="small">
+        <b>Shortcuts</b><br/>
+        • Welcome → define org + audience + respondent<br/>
+        • Assessment → answer 70 items<br/>
+        • Results → classification + drift narrative<br/>
+        • Save Respondent → add to team roster<br/>
+        • Team → aggregate + export/import JSON<br/>
+        • Report → print-ready PDF
+      </div>
+
+      <div class="hr"></div>
+      <div class="btnbar">
+        <button class="secondary" id="exportJsonBtn2">Export Team JSON</button>
+        <button class="secondary" id="importJsonBtn2">Import Team JSON</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   BUILT BY DESIGN™ — Question Bank + Narrative Map (FINAL)
+   Nonprofits use corporate lens.
+   ========================================================= */
+const BBD_BANK = {
+  "meta": {
+    "brand": "Jeff Williams, Sr. | THE ARCHITECT®",
+    "framework": "BUILT BY DESIGN™",
+    "corePromise": "Designing systems that perform under extreme pressure.",
+    "scale": {
+      "min": 1,
+      "max": 5,
+      "labels": {
+        "1": "Strongly Disagree",
+        "2": "Disagree",
+        "3": "Neutral",
+        "4": "Agree",
+        "5": "Strongly Agree"
+      }
+    },
+    "pillarOrder": [
+      "intention",
+      "structure",
+      "standards",
+      "execution",
+      "stewardship",
+      "adaptability",
+      "succession"
+    ],
+    "modes": {
+      "athletic": "Athletic Program",
+      "education": "School District / School",
+      "corporate": "Business / Nonprofit",
+      "church": "Church"
+    },
+    "notes": [
+      "Nonprofits use the corporate language (no separate nonprofit mode).",
+      "All questions share the same diagnostic intent; only wording renders by mode."
+    ]
+  },
+  "pillars": [
+    {
+      "key": "intention",
+      "label": "Intention",
+      "description": "Clarity of purpose, direction, and why the system exists under pressure.",
+      "questions": [
+        {"id":"I-01","athletic":"Our program has a clearly defined purpose that guides how we train, compete, and respond to adversity.","education":"Our school/district has a clearly defined purpose that guides instruction, discipline, and student support.","corporate":"Our organization has a clearly defined purpose that guides strategy, operations, and leadership decisions.","church":"Our church has a clearly defined mission that guides ministry decisions."},
+        {"id":"I-02","athletic":"Everyone in our program understands why we do what we do—not just what we do.","education":"Staff understand the deeper purpose behind initiatives—not just compliance requirements.","corporate":"Employees understand the purpose behind decisions—not just assigned tasks.","church":"Leaders and volunteers understand why the church exists, not just what we do."},
+        {"id":"I-03","athletic":"Our long-term vision is consistently communicated by leadership.","education":"Our long-term vision for students and staff is consistently communicated.","corporate":"Leadership consistently communicates long-term organizational vision.","church":"Vision for the church is consistently communicated from leadership."},
+        {"id":"I-04","athletic":"Decisions made under pressure align with our stated purpose.","education":"Crisis decisions align with our stated mission and values.","corporate":"High-pressure decisions remain aligned with organizational purpose.","church":"Decisions made under pressure align with our mission and calling."},
+        {"id":"I-05","athletic":"Our purpose remains clear even after losses or setbacks.","education":"Our purpose remains clear during academic or behavioral challenges.","corporate":"Our purpose remains clear during market or operational stress.","church":"Ministry direction remains clear during seasons of challenge."},
+        {"id":"I-06","athletic":"Goals are intentionally set—not inherited from tradition or past success.","education":"Goals are intentionally set—not simply carried over year to year.","corporate":"Strategic goals are intentionally designed—not assumed.","church":"Goals are intentionally set rather than assumed or inherited."},
+        {"id":"I-07","athletic":"New players and staff quickly understand the program’s direction.","education":"New hires quickly understand the school’s direction.","corporate":"New employees quickly understand the organization’s direction.","church":"New members and leaders quickly understand the church’s purpose."},
+        {"id":"I-08","athletic":"Short-term goals support long-term success.","education":"Short-term initiatives support long-term improvement.","corporate":"Short-term execution supports long-term strategy.","church":"Short-term ministry efforts support long-term spiritual impact."},
+        {"id":"I-09","athletic":"Our purpose influences daily behavior, not just slogans.","education":"Our purpose influences daily practice, not just statements.","corporate":"Our purpose influences daily behavior, not just branding.","church":"Mission influences daily behavior, not just statements of belief."},
+        {"id":"I-10","athletic":"Our program would still know who it is even if leadership changed.","education":"Our school would still know who it is if leadership changed.","corporate":"Our organization would retain identity through leadership change.","church":"The church’s identity would remain intact through leadership transition."}
+      ]
+    },
+    {
+      "key":"structure","label":"Structure","description":"Roles, systems, decision pathways, and organizational design.",
+      "questions":[
+        {"id":"S-01","athletic":"Roles and responsibilities are clearly defined across players, coaches, and staff.","education":"Roles and responsibilities are clearly defined across staff and leadership.","corporate":"Roles and responsibilities are clearly defined across the organization.","church":"Roles and responsibilities among staff, elders, and volunteers are clear."},
+        {"id":"S-02","athletic":"Decision-making authority is clear at every level of the program.","education":"Decision-making authority is clear at every level of the school/district.","corporate":"Decision-making authority is clear at every level of the organization.","church":"Decision-making authority is clearly defined within church leadership."},
+        {"id":"S-03","athletic":"Our structure supports performance rather than creating confusion.","education":"Our structure supports teaching and learning rather than creating friction.","corporate":"Our structure supports execution rather than slowing progress.","church":"Church structure supports ministry effectiveness rather than creating confusion."},
+        {"id":"S-04","athletic":"Communication flows efficiently between leadership, coaches, and players.","education":"Communication flows efficiently between leadership, teachers, and staff.","corporate":"Communication flows efficiently across teams and departments.","church":"Communication flows clearly between leadership and ministry teams."},
+        {"id":"S-05","athletic":"Accountability is built into the system—not dependent on personalities.","education":"Accountability is systemic—not personality-driven.","corporate":"Accountability is structural—not personality-driven.","church":"Accountability is built into church systems, not dependent on individuals."},
+        {"id":"S-06","athletic":"Structural gaps are addressed before they cause breakdowns.","education":"Structural gaps are addressed before they impact outcomes.","corporate":"Structural gaps are addressed proactively.","church":"Structural gaps are addressed before they create ministry breakdowns."},
+        {"id":"S-07","athletic":"People are positioned based on strengths, not convenience.","education":"Staff are positioned based on strengths, not availability.","corporate":"Talent is aligned to strengths, not just roles.","church":"People are placed in roles based on gifting rather than availability."},
+        {"id":"S-08","athletic":"Our structure scales without chaos.","education":"Our structure scales without dysfunction.","corporate":"Our structure scales effectively as we grow.","church":"Church systems scale without creating disorder."},
+        {"id":"S-09","athletic":"Everyone knows who owns final decisions.","education":"Everyone knows where final decisions are made.","corporate":"Everyone understands decision ownership.","church":"Everyone understands where final ministry decisions are made."},
+        {"id":"S-10","athletic":"Our structure holds up under competitive pressure.","education":"Our structure holds up under accountability pressure.","corporate":"Our structure holds up under operational pressure.","church":"Church structure holds up during seasons of growth or crisis."}
+      ]
+    },
+    {
+      "key":"standards","label":"Standards","description":"Clear expectations, consistency, and non-negotiables.",
+      "questions":[
+        {"id":"ST-01","athletic":"Performance and behavior standards are clearly defined.","education":"Academic and professional standards are clearly defined.","corporate":"Performance and conduct standards are clearly defined.","church":"Ministry expectations and conduct standards are clearly defined."},
+        {"id":"ST-02","athletic":"Standards are enforced regardless of role or status.","education":"Standards are enforced consistently across staff.","corporate":"Standards apply equally across the organization.","church":"Standards apply consistently across staff, leaders, and volunteers."},
+        {"id":"ST-03","athletic":"Leaders model the standards they expect.","education":"Leadership models professional standards.","corporate":"Leaders model expected standards.","church":"Church leaders model the standards they expect."},
+        {"id":"ST-04","athletic":"Consequences for missing standards are clear and fair.","education":"Consequences for missing standards are clear and fair.","corporate":"Accountability for missing standards is clear and fair.","church":"Accountability is handled with clarity and fairness."},
+        {"id":"ST-05","athletic":"Standards remain firm during adversity.","education":"Standards remain firm during crisis.","corporate":"Standards remain firm under pressure.","church":"Standards remain firm during conflict or controversy."},
+        {"id":"ST-06","athletic":"Underperformance is addressed directly.","education":"Underperformance is addressed directly.","corporate":"Underperformance is addressed directly.","church":"Underperformance or unhealthy behavior is addressed directly."},
+        {"id":"ST-07","athletic":"Excellence is clearly defined.","education":"Excellence is clearly defined.","corporate":"Excellence is clearly defined.","church":"Excellence in ministry is clearly defined."},
+        {"id":"ST-08","athletic":"Standards elevate performance rather than discourage effort.","education":"Standards elevate practice rather than discourage staff.","corporate":"Standards elevate performance rather than suppress initiative.","church":"Standards elevate spiritual growth rather than suppressing participation."},
+        {"id":"ST-09","athletic":"Standards are revisited and refined.","education":"Standards are revisited and refined.","corporate":"Standards are revisited and refined.","church":"Expectations are revisited and refined as the church grows."},
+        {"id":"ST-10","athletic":"There is no confusion about what is acceptable.","education":"Expectations are unambiguous.","corporate":"Expectations are unambiguous.","church":"There is clarity around what behaviors and practices are acceptable."}
+      ]
+    },
+    {
+      "key":"execution","label":"Execution","description":"Translation of plans into disciplined action.",
+      "questions":[
+        {"id":"E-01","athletic":"Training plans and game plans consistently translate into disciplined execution.","education":"Improvement plans consistently translate into classroom and school-level execution.","corporate":"Strategic plans consistently translate into operational execution.","church":"Ministry plans translate into consistent action."},
+        {"id":"E-02","athletic":"We follow through on commitments made by the program.","education":"We follow through on commitments made to staff and students.","corporate":"We follow through on organizational commitments.","church":"Church initiatives move beyond discussion into implementation."},
+        {"id":"E-03","athletic":"Meetings lead to decisions and action—not just discussion.","education":"Meetings lead to decisions and action—not just discussion.","corporate":"Meetings lead to decisions and action—not just discussion.","church":"Leadership decisions lead to measurable follow-through."},
+        {"id":"E-04","athletic":"We have consistent execution rhythms (check-ins, film review, adjustments).","education":"We have consistent execution rhythms (check-ins, coaching, adjustments).","corporate":"We have consistent execution rhythms (operating cadence, reviews, adjustments).","church":"Execution rhythms (meetings, reviews, adjustments) are consistent."},
+        {"id":"E-05","athletic":"We move quickly from strategy to action.","education":"We move quickly from plans to practice.","corporate":"We move quickly from decisions to execution.","church":"Ministry teams understand how their work supports the mission."},
+        {"id":"E-06","athletic":"Obstacles to execution are identified and addressed early.","education":"Obstacles to execution are identified and addressed early.","corporate":"Obstacles to execution are identified and addressed early.","church":"Obstacles to execution are addressed early."},
+        {"id":"E-07","athletic":"Performance is monitored and adjusted in real time.","education":"Instructional and operational performance is monitored and adjusted in real time.","corporate":"Operational performance is monitored and adjusted in real time.","church":"Progress is evaluated and adjusted regularly."},
+        {"id":"E-08","athletic":"Everyone understands how daily actions connect to outcomes.","education":"Everyone understands how daily actions connect to outcomes.","corporate":"Everyone understands how daily actions connect to outcomes.","church":"Execution remains disciplined during busy or stressful seasons."},
+        {"id":"E-09","athletic":"Execution remains disciplined under pressure and fatigue.","education":"Execution remains disciplined under pressure and fatigue.","corporate":"Execution remains disciplined under pressure and fatigue.","church":"Ministry breakdowns are addressed quickly."},
+        {"id":"E-10","athletic":"We learn from breakdowns and adjust quickly.","education":"We learn from breakdowns and adjust quickly.","corporate":"We learn from breakdowns and adjust quickly.","church":"Lessons learned are applied moving forward."}
+      ]
+    },
+    {
+      "key":"stewardship","label":"Stewardship","description":"Ownership, responsibility, and care for people and resources.",
+      "questions":[
+        {"id":"SW-01","athletic":"Leaders take responsibility for outcomes, not just effort.","education":"Leaders take responsibility for outcomes, not just effort.","corporate":"Leaders take responsibility for outcomes, not just effort.","church":"Leaders take responsibility for ministry outcomes."},
+        {"id":"SW-02","athletic":"Time, resources, and energy are managed wisely to sustain performance.","education":"Time, resources, and energy are managed wisely to sustain performance.","corporate":"Time, resources, and energy are managed wisely to sustain performance.","church":"Time, finances, and people are stewarded wisely."},
+        {"id":"SW-03","athletic":"We actively prevent burnout and protect well-being.","education":"We actively prevent burnout and protect well-being.","corporate":"We actively prevent burnout and protect well-being.","church":"Leadership actively works to prevent burnout."},
+        {"id":"SW-04","athletic":"Workload and expectations are reasonable and sustainable.","education":"Workload and expectations are reasonable and sustainable.","corporate":"Workload and expectations are reasonable and sustainable.","church":"Success is stewarded with humility and responsibility."},
+        {"id":"SW-05","athletic":"Leaders invest in the growth and development of others.","education":"Leaders invest in the growth and development of others.","corporate":"Leaders invest in the growth and development of others.","church":"Leaders invest intentionally in people development."},
+        {"id":"SW-06","athletic":"We protect trust as a critical asset within the program.","education":"We protect trust as a critical asset within the school/district.","corporate":"We protect trust as a critical asset within the organization.","church":"Trust is treated as a sacred responsibility."},
+        {"id":"SW-07","athletic":"We care for people without lowering expectations.","education":"We care for people without lowering expectations.","corporate":"We care for people without lowering expectations.","church":"Care for people does not lower ministry expectations."},
+        {"id":"SW-08","athletic":"We make decisions with long-term impact in mind.","education":"We make decisions with long-term impact in mind.","corporate":"We make decisions with long-term impact in mind.","church":"Decisions consider long-term spiritual health."},
+        {"id":"SW-09","athletic":"Leadership models integrity and accountability consistently.","education":"Leadership models integrity and accountability consistently.","corporate":"Leadership models integrity and accountability consistently.","church":"Leadership models integrity and accountability."},
+        {"id":"SW-10","athletic":"Our systems support sustainability through demanding seasons.","education":"Our systems support sustainability through demanding seasons.","corporate":"Our systems support sustainability through demanding seasons.","church":"Stewardship decisions reflect the church’s values."}
+      ]
+    },
+    {
+      "key":"adaptability","label":"Adaptability","description":"Ability to adjust, learn, and evolve without losing integrity.",
+      "questions":[
+        {"id":"A-01","athletic":"We adjust strategy effectively based on opponents, injuries, or changing conditions.","education":"We adjust strategies effectively as student needs and conditions change.","corporate":"We adjust strategy effectively as market and operational conditions change.","church":"The church responds effectively to changing community needs."},
+        {"id":"A-02","athletic":"Feedback is welcomed and acted upon.","education":"Feedback is welcomed and acted upon.","corporate":"Feedback is welcomed and acted upon.","church":"Feedback is welcomed and acted upon."},
+        {"id":"A-03","athletic":"We adapt without compromising our identity and standards.","education":"We adapt without compromising mission and standards.","corporate":"We adapt without compromising purpose and standards.","church":"Ministry approaches adapt without compromising core beliefs."},
+        {"id":"A-04","athletic":"Leaders adjust quickly without creating confusion.","education":"Leaders adjust quickly without creating confusion.","corporate":"Leaders adjust quickly without creating confusion.","church":"Leaders adjust strategy when conditions change."},
+        {"id":"A-05","athletic":"We treat failures as learning opportunities, not blame sessions.","education":"We treat failures as learning opportunities, not blame sessions.","corporate":"We treat failures as learning opportunities, not blame sessions.","church":"Failure is treated as a learning opportunity."},
+        {"id":"A-06","athletic":"Innovation is encouraged within clear boundaries.","education":"Innovation is encouraged within clear boundaries.","corporate":"Innovation is encouraged within clear boundaries.","church":"Innovation is encouraged within healthy boundaries."},
+        {"id":"A-07","athletic":"Past success does not prevent necessary change.","education":"Past success does not prevent necessary change.","corporate":"Past success does not prevent necessary change.","church":"Past success does not prevent necessary change."},
+        {"id":"A-08","athletic":"We regularly evaluate what should be kept, adjusted, or removed.","education":"We regularly evaluate what should be kept, adjusted, or removed.","corporate":"We regularly evaluate what should be kept, adjusted, or removed.","church":"Ministries are evaluated for ongoing relevance."},
+        {"id":"A-09","athletic":"Adaptation happens intentionally—not out of panic.","education":"Adaptation happens intentionally—not out of panic.","corporate":"Adaptation happens intentionally—not out of panic.","church":"Adaptation happens intentionally, not reactively."},
+        {"id":"A-10","athletic":"We improve faster than our competitive environment demands.","education":"We improve faster than challenges and student needs demand.","corporate":"We improve faster than the market demands.","church":"The church improves faster than challenges arise."}
+      ]
+    },
+    {
+      "key":"succession","label":"Succession","description":"Continuity, leadership development, and future readiness.",
+      "questions":[
+        {"id":"SU-01","athletic":"Leadership development is intentional within our program.","education":"Leadership development is intentional within our school/district.","corporate":"Leadership development is intentional within our organization.","church":"Leadership development is intentional."},
+        {"id":"SU-02","athletic":"Future leaders are identified and developed early.","education":"Future leaders are identified and developed early.","corporate":"Future leaders are identified and developed early.","church":"Future leaders are being identified and trained."},
+        {"id":"SU-03","athletic":"Key knowledge and processes are documented and transferable.","education":"Key knowledge and processes are documented and transferable.","corporate":"Key knowledge and processes are documented and transferable.","church":"Ministry knowledge is documented and transferable."},
+        {"id":"SU-04","athletic":"The program does not rely on one person to function well.","education":"The school/district does not rely on one person to function well.","corporate":"The organization does not rely on one person to function well.","church":"The church does not depend on one person to thrive."},
+        {"id":"SU-05","athletic":"Emerging leaders are given real opportunities to lead and grow.","education":"Emerging leaders are given real opportunities to lead and grow.","corporate":"Emerging leaders are given real opportunities to lead and grow.","church":"Emerging leaders are given opportunities to grow."},
+        {"id":"SU-06","athletic":"Transitions are planned rather than rushed.","education":"Transitions are planned rather than rushed.","corporate":"Transitions are planned rather than rushed.","church":"Leadership transitions are planned."},
+        {"id":"SU-07","athletic":"Culture is protected during leadership changes.","education":"Culture is protected during leadership changes.","corporate":"Culture is protected during leadership changes.","church":"Culture is protected during leadership change."},
+        {"id":"SU-08","athletic":"People are empowered to lead, not just follow instructions.","education":"People are empowered to lead, not just follow instructions.","corporate":"People are empowered to lead, not just follow instructions.","church":"Authority is shared appropriately."},
+        {"id":"SU-09","athletic":"We anticipate future challenges and prepare leaders to handle them.","education":"We anticipate future challenges and prepare leaders to handle them.","corporate":"We anticipate future challenges and prepare leaders to handle them.","church":"The church is preparing for future challenges."},
+        {"id":"SU-10","athletic":"We are building a program designed to outlast current leadership.","education":"We are building a school/district designed to outlast current leadership.","corporate":"We are building an organization designed to outlast current leadership.","church":"The ministry is being built to outlast current leadership."}
+      ]
+    }
+  ],
+  "narrativeMap":{
+    "rules":{
+      "classification":{
+        "builtByDefault":{"min":0,"max":169,"label":"Built by Default"},
+        "underConstruction":{"min":170,"max":259,"label":"Under Construction"},
+        "builtByDesign":{"min":260,"max":350,"label":"Built by Design"}
+      },
+      "pillarCondition":[
+        {"min":10,"max":24,"label":"Fragile"},
+        {"min":25,"max":34,"label":"Unstable"},
+        {"min":35,"max":44,"label":"Reinforcing"},
+        {"min":45,"max":50,"label":"Load-Bearing"}
+      ]
+    },
+    "pillarFailureNarratives":{
+      "intention":{
+        "athletic":"The program is operating without a unifying why. Under pressure, the identity will drift, emotions will lead, and execution will fragment.",
+        "education":"The school is reacting to mandates instead of operating from mission. Under pressure, burnout rises, consistency drops, and improvement stalls.",
+        "corporate":"The organization lacks directional clarity. Under stress, teams default to silos, short-term thinking, and misaligned decisions.",
+        "church":"The church lacks a shared mission anchor in daily decisions. Under pressure, ministries drift, alignment weakens, and momentum becomes personality-dependent."
+      },
+      "structure":{
+        "athletic":"Talent exists, but role confusion and unclear decision pathways will undermine execution when the game tightens.",
+        "education":"Effort exists, but unclear roles and decision bottlenecks will stall progress and amplify fatigue under accountability pressure.",
+        "corporate":"Strategy exists, but structural friction and unclear ownership will slow execution and create costly handoff failures.",
+        "church":"Calling exists, but unclear roles and governance pathways will create gaps, duplication, and breakdowns during growth or crisis."
+      },
+      "standards":{
+        "athletic":"Inconsistency will show up as penalties, lapses, and uneven effort. Pressure will expose what is tolerated.",
+        "education":"Expectations will shift from classroom to classroom. Pressure will increase discipline issues and staff exhaustion.",
+        "corporate":"Culture will erode through inconsistency. Pressure will reveal double standards and weak accountability.",
+        "church":"Ministry culture will be shaped by what is tolerated. Under pressure, inconsistency will create conflict and confusion."
+      },
+      "execution":{
+        "athletic":"Plans will not survive competition. Under pressure, the program will revert to improvisation instead of disciplined rhythm.",
+        "education":"Initiatives will not survive the year. Under pressure, follow-through collapses and improvement becomes episodic.",
+        "corporate":"Strategy will not survive operations. Under pressure, work becomes busy instead of effective.",
+        "church":"Vision will not translate into ministry outcomes. Under pressure, activity increases but impact decreases."
+      },
+      "stewardship":{
+        "athletic":"Workload mismanagement will produce burnout, attrition, and inconsistent energy when the season gets heavy.",
+        "education":"Educator burnout will accelerate. Under pressure, staff capacity collapses and student support becomes reactive.",
+        "corporate":"Turnover and disengagement increase. Under pressure, the system consumes people instead of developing them.",
+        "church":"Volunteer fatigue and leadership strain will rise. Under pressure, care becomes inconsistent and momentum fades."
+      },
+      "adaptability":{
+        "athletic":"Opponents will out-adjust you. Under pressure, the program will get stuck and repeat what no longer works.",
+        "education":"Student needs will outpace response. Under pressure, strategies become outdated and behavior escalates.",
+        "corporate":"Markets will outmaneuver you. Under pressure, change is slow and opportunities are missed.",
+        "church":"Community needs will outpace ministry response. Under pressure, the church becomes reactive instead of responsive."
+      },
+      "succession":{
+        "athletic":"The program depends on individuals, not systems. A leadership shift would destabilize identity and performance.",
+        "education":"Leadership turnover would disrupt progress. Without a bench, improvement resets with every transition.",
+        "corporate":"The organization is fragile beyond current leaders. Growth will outpace capacity without leadership development.",
+        "church":"The ministry is personality-dependent. Without intentional development, transitions will disrupt culture and continuity."
+      }
+    }
+  }
+};
+
+/* =========================================================
+   Storage Keys (A2)
+   ========================================================= */
+const TEAM_KEY  = "bbd_team_roster_v1";
+const DRAFT_KEY = "bbd_current_draft_v1";
+
+/* =========================================================
+   State
+   ========================================================= */
+let MODE = "corporate"; // active lens for rendering (athletic/education/corporate/church)
+let state = {
+  orgName: "",
+  audienceType: "School District",
+  lensOverride: "auto",
+  respondent: { name:"", title:"", role:"Player", unit:"General", group:"", jersey:"", date:"", notes:"" },
+  answers: {}, // { pillarKey: [10 numbers] }
+  cursor: { p:0, q:0 } // pillar index, question index
+};
+
+const PILLARS = BBD_BANK.pillars.map(p => ({key:p.key, label:p.label}));
+
+/* =========================================================
+   Helpers
+   ========================================================= */
+function $(id){ return document.getElementById(id); }
+
+function uid(){
+  return "id_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+}
+function getRoster(){
+  return JSON.parse(localStorage.getItem(TEAM_KEY) || "[]");
+}
+function saveRoster(list){
+  localStorage.setItem(TEAM_KEY, JSON.stringify(list));
+}
+function clearRoster(){
+  localStorage.removeItem(TEAM_KEY);
+}
+function saveDraft(){
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
+}
+function loadDraft(){
+  const raw = localStorage.getItem(DRAFT_KEY);
+  if(!raw) return null;
+  try{ return JSON.parse(raw); }catch(e){ return null; }
+}
+function clearDraft(){
+  localStorage.removeItem(DRAFT_KEY);
+}
+function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+function sum(arr){ return (arr||[]).reduce((a,b)=>a+(+b||0),0); }
+function avg(nums){
+  const a = nums.filter(n => typeof n==="number" && !isNaN(n));
+  return a.length ? a.reduce((x,y)=>x+y,0)/a.length : 0;
+}
+function stdev(nums){
+  const a = nums.filter(n => typeof n==="number" && !isNaN(n));
+  if(a.length < 2) return 0;
+  const m = avg(a);
+  const v = a.reduce((s,n)=>s+(n-m)*(n-m),0)/(a.length-1);
+  return Math.sqrt(v);
+}
+function pillarCondition(score10to50){
+  const rules = BBD_BANK.narrativeMap.rules.pillarCondition;
+  for(const r of rules){
+    if(score10to50>=r.min && score10to50<=r.max) return r.label;
+  }
+  return "—";
+}
+function classification(total){
+  const r = BBD_BANK.narrativeMap.rules.classification;
+  if(total>=r.builtByDesign.min) return r.builtByDesign.label;
+  if(total>=r.underConstruction.min) return r.underConstruction.label;
+  return r.builtByDefault.label;
+}
+function classificationDot(cls){
+  if(cls==="Built by Design") return "ok";
+  if(cls==="Under Construction") return "warn";
+  return "bad";
+}
+function iconSVG(pillarKey){
+  // Simple inline SVG icons (architectural, minimal)
+  const gold = "rgba(215,180,106,.95)";
+  const stroke = "rgba(242,244,247,.85)";
+  const s = `stroke="${stroke}" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"`;
+  switch(pillarKey){
+    case "intention":
+      return `<svg class="svg" viewBox="0 0 24 24"><path ${s} d="M12 3l7 4v6c0 5-3 8-7 8s-7-3-7-8V7l7-4z"/><path ${s} d="M9 12h6"/><path ${s} d="M12 9v6"/></svg>`;
+    case "structure":
+      return `<svg class="svg" viewBox="0 0 24 24"><path ${s} d="M4 20V8l8-4 8 4v12"/><path ${s} d="M9 20v-6h6v6"/><path ${s} d="M6.5 10.5h.01M17.5 10.5h.01"/></svg>`;
+    case "standards":
+      return `<svg class="svg" viewBox="0 0 24 24"><path ${s} d="M7 7h10"/><path ${s} d="M7 12h10"/><path ${s} d="M7 17h10"/><path ${s} d="M5 7h.01M5 12h.01M5 17h.01"/><path stroke="${gold}" stroke-width="1.7" fill="none" d="M19 6l1 1"/></svg>`;
+    case "execution":
+      return `<svg class="svg" viewBox="0 0 24 24"><path ${s} d="M5 19l4-4 3 3 7-7"/><path ${s} d="M19 9V5h-4"/></svg>`;
+    case "stewardship":
+      return `<svg class="svg" viewBox="0 0 24 24"><path ${s} d="M12 21s7-4 7-10a4 4 0 0 0-7-2 4 4 0 0 0-7 2c0 6 7 10 7 10z"/></svg>`;
+    case "adaptability":
+      return `<svg class="svg" viewBox="0 0 24 24"><path ${s} d="M20 12a8 8 0 1 1-2.3-5.7"/><path ${s} d="M20 4v6h-6"/></svg>`;
+    case "succession":
+      return `<svg class="svg" viewBox="0 0 24 24"><path ${s} d="M7 20v-7a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v7"/><path ${s} d="M9 9a3 3 0 1 0 6 0"/><path ${s} d="M5 20h14"/></svg>`;
+    default:
+      return `<svg class="svg" viewBox="0 0 24 24"><path ${s} d="M4 12h16"/></svg>`;
+  }
+}
+function audienceToMode(audience){
+  if(audience==="Athletic Program") return "athletic";
+  if(audience==="School District" || audience==="School") return "education";
+  if(audience==="Church") return "church";
+  // Business + Nonprofit → corporate
+  return "corporate";
+}
+function effectiveMode(){
+  const override = state.lensOverride || "auto";
+  if(override !== "auto") return override;
+  return audienceToMode(state.audienceType);
+}
+
+/* =========================================================
+   Initialize answers
+   ========================================================= */
+function initAnswers(){
+  state.answers = {};
+  for(const p of BBD_BANK.pillars){
+    state.answers[p.key] = new Array(p.questions.length).fill(null);
+  }
+}
+initAnswers();
+
+/* =========================================================
+   Flattened question index mapping
+   ========================================================= */
+function flatIndex(pIdx,qIdx){
+  let idx = 0;
+  for(let i=0;i<pIdx;i++) idx += BBD_BANK.pillars[i].questions.length;
+  return idx + qIdx;
+}
+function totalQuestions(){
+  return BBD_BANK.pillars.reduce((a,p)=>a+p.questions.length,0);
+}
+function totalAnswered(){
+  let c=0;
+  for(const p of BBD_BANK.pillars){
+    for(const v of state.answers[p.key]) if(typeof v==="number") c++;
+  }
+  return c;
+}
+
+/* =========================================================
+   Compute scores & insights
+   ========================================================= */
+function computeScores(){
+  const scores = {};
+  let total = 0;
+  for(const p of BBD_BANK.pillars){
+    const sc = sum(state.answers[p.key].map(v => +v||0));
+    scores[p.key] = sc;
+    total += sc;
+  }
+  return { scores, total };
+}
+function strongestWeakest(scores){
+  let strong = BBD_BANK.pillars[0].key;
+  let weak = BBD_BANK.pillars[0].key;
+  for(const p of BBD_BANK.pillars){
+    if(scores[p.key] > scores[strong]) strong = p.key;
+    if(scores[p.key] < scores[weak]) weak = p.key;
+  }
+  return { strong, weak };
+}
+function pillarRecommendations(pKey, score){
+  // 3 bullets, architect language, grounded in condition
+  const cond = pillarCondition(score);
+  const base = [];
+  if(cond==="Fragile"){
+    base.push("Install a clear baseline standard for this pillar and remove ambiguity immediately.");
+    base.push("Reduce load: stop adding initiatives until this pillar is reinforced.");
+    base.push("Create a simple weekly rhythm to pressure-test compliance and close gaps fast.");
+  }else if(cond==="Unstable"){
+    base.push("Clarify ownership and decision pathways so this pillar is not personality-dependent.");
+    base.push("Add measurement: define what “good” looks like and track it weekly.");
+    base.push("Reinforce with coaching and accountability before pressure exposes cracks.");
+  }else if(cond==="Reinforcing"){
+    base.push("Tighten consistency: remove drift across teams/departments by standardizing the rhythm.");
+    base.push("Document the blueprint so performance stays stable during stress or transition.");
+    base.push("Raise the load capacity: add reps, feedback loops, and faster correction cycles.");
+  }else if(cond==="Load-Bearing"){
+    base.push("Protect what’s working: codify the blueprint and keep the standard uncompromised.");
+    base.push("Scale intentionally: replicate this pillar’s pattern to your weakest pillar.");
+    base.push("Pressure-test regularly: the goal is durability, not convenience.");
+  }else{
+    base.push("Define the blueprint for this pillar.");
+    base.push("Measure it weekly.");
+    base.push("Reinforce before pressure hits.");
+  }
+  return base;
+}
+function executiveSummaryText(cls, weakKey, mode){
+  const name = BBD_BANK.pillars.find(p=>p.key===weakKey)?.label || weakKey;
+  const voice = mode==="athletic" ? "program" : (mode==="education" ? "system" : (mode==="church" ? "ministry" : "organization"));
+  if(cls==="Built by Design"){
+    return `This ${voice} is operating with structural integrity. The system is largely load-bearing under pressure, with disciplined execution and visible standards. Your next edge is not more motivation — it’s protecting consistency and scaling the blueprint into the areas where drift still appears. Greatest drift is currently in ${name}: reinforce it now so pressure never finds a weak seam.`;
+  }
+  if(cls==="Under Construction"){
+    return `This ${voice} has real strengths, but structural drift is present. Under pressure, the system will perform inconsistently unless the blueprint is tightened. Your greatest drift is in ${name}. Stabilize it first, then reset standards and install execution rhythms so the structure can carry heavier load without cracking.`;
+  }
+  return `This ${voice} is currently operating “Built by Default.” That does not mean there is no talent — it means the structure is not designed to sustain performance under pressure. The greatest drift is in ${name}. Reinforce it immediately, then rebuild standards and execution rhythm so the system stops depending on personalities and starts operating like a durable blueprint.`;
+}
+
+/* =========================================================
+   UI: Tabs
+   ========================================================= */
+const tabs = {
+  welcome: $("welcomePanel"),
+  assess: $("assessPanel"),
+  results: $("resultsPanel"),
+  team: $("teamPanel"),
+  report: $("reportPanel")
+};
+function setTab(name){
+  for(const k of Object.keys(tabs)) tabs[k].classList.add("hidden");
+  tabs[name].classList.remove("hidden");
+
+  // chips
+  $("tabWelcome").classList.toggle("active", name==="welcome");
+  $("tabAssess").classList.toggle("active", name==="assess");
+  $("tabResults").classList.toggle("active", name==="results");
+  $("tabTeam").classList.toggle("active", name==="team");
+  $("tabReport").classList.toggle("active", name==="report");
+}
+$("tabWelcome").onclick = ()=>setTab("welcome");
+$("tabAssess").onclick = ()=>setTab("assess");
+$("tabResults").onclick = ()=>setTab("results");
+$("tabTeam").onclick = ()=>{ refreshTeam(); setTab("team"); };
+$("tabReport").onclick = ()=>{ buildReportFromCurrent(); setTab("report"); };
+
+function syncSidebar(){
+  MODE = effectiveMode();
+  $("modeBadge").textContent = `Mode: ${MODE}`;
+  $("currentLensText").textContent = `${MODE}`;
+  $("currentRespText").textContent = state.respondent.name ? state.respondent.name : "—";
+  $("currentProgText").textContent = `${totalAnswered()} / ${totalQuestions()}`;
+}
+
+/* =========================================================
+   Welcome bindings
+   ========================================================= */
+function pullWelcomeIntoState(){
+  state.orgName = $("orgName").value.trim();
+  state.audienceType = $("audienceType").value;
+  state.lensOverride = $("lensOverride").value;
+
+  state.respondent.name = $("respName").value.trim();
+  state.respondent.title = $("respTitle").value.trim();
+  state.respondent.role = $("respRole").value;
+  state.respondent.unit = $("respUnit").value;
+  state.respondent.group = $("respGroup").value.trim();
+  state.respondent.jersey = $("respJersey").value.trim();
+  state.respondent.date = $("respDate").value;
+  state.respondent.notes = $("respNotes").value.trim();
+
+  MODE = effectiveMode();
+  syncSidebar();
+}
+["orgName","audienceType","lensOverride","respName","respTitle","respRole","respUnit","respGroup","respJersey","respDate","respNotes"].forEach(id=>{
+  $(id).addEventListener("input", ()=>{ pullWelcomeIntoState(); saveDraft(); });
+  $(id).addEventListener("change", ()=>{ pullWelcomeIntoState(); saveDraft(); });
+});
+
+/* =========================================================
+   Render Question
+   ========================================================= */
+function currentPillarObj(){
+  return BBD_BANK.pillars[state.cursor.p];
+}
+function currentQuestionObj(){
+  const p = currentPillarObj();
+  return p.questions[state.cursor.q];
+}
+function renderQuestion(){
+  MODE = effectiveMode();
+  const p = currentPillarObj();
+  const q = currentQuestionObj();
+  const idx = flatIndex(state.cursor.p, state.cursor.q);
+  const answered = totalAnswered();
+
+  $("progressText").textContent = `${answered} / ${totalQuestions()}`;
+  $("progressBar").style.width = `${(answered/totalQuestions())*100}%`;
+  $("autosaveHint").textContent = `Autosave is ON · Pillar ${state.cursor.p+1}/7 · Item ${state.cursor.q+1}/10`;
+
+  const existing = state.answers[p.key][state.cursor.q];
+
+  const qText = q[MODE] || q.corporate;
+
+  const html = `
+    <div class="qTop">
+      <div>
+        <div class="mini">${BBD_BANK.meta.framework} · ${p.label.toUpperCase()}</div>
+        <div class="qText">${qText}</div>
+        <div class="qMeta">Item <b>${idx+1}</b> of ${totalQuestions()} · Question ID: <span style="font-family:var(--mono)">${q.id}</span></div>
+      </div>
+      <div class="badge"><span class="dot warn"></span><span>${BBD_BANK.meta.corePromise}</span></div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="likert" role="radiogroup" aria-label="Likert scale">
+      ${[1,2,3,4,5].map(n=>`
+        <div>
+          <input type="radio" name="likert" id="l${n}" value="${n}" ${existing===n?'checked':''}/>
+          <label for="l${n}">${n}</label>
+        </div>
+      `).join("")}
+    </div>
+    <div class="scaleLabels">
+      <span>Strongly Disagree</span><span>Strongly Agree</span>
+    </div>
+  `;
+  $("questionCard").innerHTML = html;
+
+  // wire radios
+  for(const n of [1,2,3,4,5]){
+    const el = $("l"+n);
+    el.addEventListener("change", ()=>{
+      state.answers[p.key][state.cursor.q] = +el.value;
+      saveDraft();
+      syncSidebar();
+      $("progressText").textContent = `${totalAnswered()} / ${totalQuestions()}`;
+      $("progressBar").style.width = `${(totalAnswered()/totalQuestions())*100}%`;
+    });
+  }
+}
+
+/* =========================================================
+   Navigation controls
+   ========================================================= */
+function next(){
+  const p = state.cursor.p;
+  const q = state.cursor.q;
+  if(q < BBD_BANK.pillars[p].questions.length - 1){
+    state.cursor.q++;
+  }else if(p < BBD_BANK.pillars.length - 1){
+    state.cursor.p++;
+    state.cursor.q = 0;
+  }else{
+    // end
+    saveDraft();
+    buildResults();
+    setTab("results");
+    return;
+  }
+  saveDraft();
+  renderQuestion();
+}
+function prev(){
+  const p = state.cursor.p;
+  const q = state.cursor.q;
+  if(q > 0){
+    state.cursor.q--;
+  }else if(p > 0){
+    state.cursor.p--;
+    state.cursor.q = BBD_BANK.pillars[state.cursor.p].questions.length - 1;
+  }
+  saveDraft();
+  renderQuestion();
+}
+$("nextBtn").onclick = next;
+$("prevBtn").onclick = prev;
+$("exitBtn").onclick = ()=>{ saveDraft(); setTab("welcome"); };
+
+$("jumpBtn").onclick = ()=>{
+  const names = BBD_BANK.pillars.map((p,i)=>`${i+1}) ${p.label}`).join("\n");
+  const pick = prompt(`Jump to pillar (1-7):\n${names}`, "1");
+  if(!pick) return;
+  const n = clamp(parseInt(pick,10)||1,1,7);
+  state.cursor.p = n-1;
+  state.cursor.q = 0;
+  saveDraft();
+  renderQuestion();
+};
+
+/* =========================================================
+   Start/Resume/Reset
+   ========================================================= */
+$("startBtn").onclick = ()=>{
+  pullWelcomeIntoState();
+  if(!state.respondent.name){
+    alert("Respondent Name is required for A2 team collection.");
+    return;
+  }
+  if(!state.orgName){
+    if(!confirm("Organization name is blank. Continue anyway?")) return;
+  }
+  // reset cursor only (keep existing answers if present)
+  if(totalAnswered()===0){
+    initAnswers();
+    state.cursor = {p:0,q:0};
+  }
+  saveDraft();
+  setTab("assess");
+  renderQuestion();
+};
+$("resumeBtn").onclick = ()=>{
+  const d = loadDraft();
+  if(!d){ alert("No draft found on this device."); return; }
+  state = d;
+  if(!state.answers || !Object.keys(state.answers).length) initAnswers();
+  $("orgName").value = state.orgName || "";
+  $("audienceType").value = state.audienceType || "School District";
+  $("lensOverride").value = state.lensOverride || "auto";
+  $("respName").value = state.respondent?.name || "";
+  $("respTitle").value = state.respondent?.title || "";
+  $("respRole").value = state.respondent?.role || "Player";
+  $("respUnit").value = state.respondent?.unit || "General";
+  $("respGroup").value = state.respondent?.group || "";
+  $("respJersey").value = state.respondent?.jersey || "";
+  $("respDate").value = state.respondent?.date || "";
+  $("respNotes").value = state.respondent?.notes || "";
+  syncSidebar();
+  setTab("assess");
+  renderQuestion();
+};
+$("resetDraftBtn").onclick = ()=>{
+  if(!confirm("Reset current draft (answers + progress) on this device?")) return;
+  initAnswers();
+  state.cursor = {p:0,q:0};
+  saveDraft();
+  alert("Draft reset.");
+  syncSidebar();
+};
+
+/* =========================================================
+   Results render (individual)
+   ========================================================= */
+function buildResults(){
+  MODE = effectiveMode();
+  const {scores,total} = computeScores();
+  const cls = classification(total);
+  const {strong,weak} = strongestWeakest(scores);
+
+  $("totalScore").textContent = total;
+  $("clsBadge").textContent = cls;
+  // dot color
+  const badge = $("clsBadge").parentElement;
+  const dot = badge.querySelector(".dot");
+  dot.classList.remove("ok","warn","bad");
+  dot.classList.add(classificationDot(cls));
+
+  $("scoreFill").style.width = `${(total/350)*100}%`;
+
+  $("weakPillar").textContent = `${BBD_BANK.pillars.find(p=>p.key===weak).label} (${scores[weak]}/50)`;
+  $("strongPillar").textContent = `${BBD_BANK.pillars.find(p=>p.key===strong).label} (${scores[strong]}/50)`;
+
+  // pillar tiles
+  const row = $("pillarsRow");
+  row.innerHTML = "";
+  for(const p of BBD_BANK.pillars){
+    const tile = document.createElement("div");
+    tile.className = "picon";
+    tile.innerHTML = `
+      <div style="display:flex; gap:10px; align-items:center">
+        ${iconSVG(p.key)}
+        <div>
+          <div class="name">${p.label}</div>
+          <div class="score">${scores[p.key]} <span class="muted" style="font-size:12px">/50</span></div>
+          <div class="small">Condition: <b>${pillarCondition(scores[p.key])}</b></div>
+        </div>
+      </div>
+    `;
+    row.appendChild(tile);
+  }
+
+  const narrative = BBD_BANK.narrativeMap.pillarFailureNarratives[weak][MODE] || "—";
+  $("pressureNarrative").textContent = narrative;
+
+  // update sidebar
+  syncSidebar();
+}
+function buildResultsAndShow(){
+  buildResults();
+  setTab("results");
+}
+$("toReportBtn").onclick = ()=>{ buildReportFromCurrent(); setTab("report"); };
+$("newRespondentBtn").onclick = ()=>{
+  // Clear answers for next person, keep org/audience/lens
+  initAnswers();
+  state.cursor = {p:0,q:0};
+  // clear respondent fields
+  state.respondent.name = "";
+  state.respondent.title = "";
+  state.respondent.group = "";
+  state.respondent.jersey = "";
+  $("respName").value = "";
+  $("respTitle").value = "";
+  $("respGroup").value = "";
+  $("respJersey").value = "";
+  saveDraft();
+  setTab("welcome");
+  alert("Ready for next respondent. Enter name and start assessment.");
+};
+$("clearAllBtn").onclick = ()=>{
+  if(!confirm("Clear ALL team roster data from this device? (Cannot undo)")) return;
+  clearRoster();
+  alert("Team data cleared.");
+};
+
+/* =========================================================
+   A2: Save respondent record
+   ========================================================= */
+function saveRespondentRecord(){
+  pullWelcomeIntoState();
+  if(!state.respondent.name){
+    alert("Respondent name is required.");
+    return;
+  }
+  const answered = totalAnswered();
+  if(answered < totalQuestions()){
+    if(!confirm(`Only ${answered}/${totalQuestions()} answered. Save anyway?`)) return;
+  }
+  const {scores,total} = computeScores();
+  const cls = classification(total);
+  const {strong,weak} = strongestWeakest(scores);
+
+  const record = {
+    id: uid(),
+    timestamp: new Date().toISOString(),
+    orgName: state.orgName,
+    audienceType: state.audienceType,
+    mode: effectiveMode(),
+    respondent: {...state.respondent},
+    answers: JSON.parse(JSON.stringify(state.answers)),
+    scores: {
+      total,
+      classification: cls,
+      pillars: scores,
+      strongest: strong,
+      weakest: weak
+    }
+  };
+
+  const roster = getRoster();
+  roster.push(record);
+  saveRoster(roster);
+
+  alert(`Saved: ${record.respondent.name} (${record.respondent.role}). Total responses on this device: ${roster.length}`);
+}
+$("saveRespondentBtn").onclick = ()=>{ saveRespondentRecord(); };
+
+/* =========================================================
+   Report builder (individual current state)
+   ========================================================= */
+function buildReportFromCurrent(){
+  MODE = effectiveMode();
+  const {scores,total} = computeScores();
+  const cls = classification(total);
+  const {strong,weak} = strongestWeakest(scores);
+
+  $("rOrg").textContent = state.orgName || "—";
+  $("rAudience").textContent = state.audienceType || "—";
+  $("rMode").textContent = MODE;
+  $("rCls").textContent = `${cls} · Total ${total}/350`;
+  $("rSummary").textContent = executiveSummaryText(cls, weak, MODE);
+  $("rPressure").textContent = BBD_BANK.narrativeMap.pillarFailureNarratives[weak][MODE] || "—";
+
+  // Pillar cards
+  const wrap = $("pillarCards");
+  wrap.innerHTML = "";
+  for(const p of BBD_BANK.pillars){
+    const sc = scores[p.key];
+    const cond = pillarCondition(sc);
+    const bullets = pillarRecommendations(p.key, sc);
+    const div = document.createElement("div");
+    div.style.marginTop = "12px";
+    div.className = "callout";
+    div.innerHTML = `
+      <div class="mini">${p.label.toUpperCase()} · ${sc}/50 · ${cond}</div>
+      <div class="small" style="margin-top:6px"><b>Key Insight:</b> ${sc<35 ? "This pillar is currently a weak load point. Under pressure, drift will show here first." : "This pillar is reinforcing the structure, but consistency must be protected under pressure."}</div>
+      <div class="small" style="margin-top:6px"><b>Risks:</b> ${sc<25 ? "High risk of breakdown under pressure, misalignment, and inconsistent outcomes." : sc<35 ? "Moderate risk of drift and inconsistency as load increases." : "Lower risk, but drift can return if standards slip."}</div>
+      <div class="small" style="margin-top:6px"><b>Priority Actions:</b>
+        <ul>
+          ${bullets.map(b=>`<li>${b}</li>`).join("")}
+        </ul>
+      </div>
+    `;
+    wrap.appendChild(div);
+  }
+}
+$("backToResultsBtn").onclick = ()=>{ buildResults(); setTab("results"); };
+$("backToTeamBtn").onclick = ()=>{ refreshTeam(); setTab("team"); };
+
+/* =========================================================
+   TEAM dashboard (A2 aggregate)
+   ========================================================= */
+function matchesFilters(r){
+  const role = $("filterRole").value;
+  const unit = $("filterUnit").value;
+  const group = $("filterGroup").value.trim().toLowerCase();
+
+  if(role !== "ALL" && r.respondent?.role !== role) return false;
+  if(unit !== "ALL" && r.respondent?.unit !== unit) return false;
+  if(group){
+    const g = (r.respondent?.group || "").toLowerCase();
+    if(!g.includes(group)) return false;
+  }
+  return true;
+}
+function teamAggregate(list){
+  const totals = list.map(r => r.scores?.total ?? 0);
+  const pillarAvgs = {};
+  for(const p of BBD_BANK.pillars){
+    pillarAvgs[p.key] = avg(list.map(r => r.scores?.pillars?.[p.key] ?? 0));
+  }
+
+  let weak = BBD_BANK.pillars[0].key;
+  let strong = BBD_BANK.pillars[0].key;
+  for(const p of BBD_BANK.pillars){
+    if(pillarAvgs[p.key] < pillarAvgs[weak]) weak = p.key;
+    if(pillarAvgs[p.key] > pillarAvgs[strong]) strong = p.key;
+  }
+
+  return {
+    count: list.length,
+    totalAvg: avg(totals),
+    totalSd: stdev(totals),
+    pillarAvgs,
+    weakestAvg: weak,
+    strongestAvg: strong
+  };
+}
+function refreshTeam(){
+  const roster = getRoster();
+  const filtered = roster.filter(matchesFilters);
+  $("teamCountBadge").textContent = `${filtered.length} Responses`;
+
+  const agg = teamAggregate(filtered);
+  $("teamAvg").textContent = agg.totalAvg.toFixed(1);
+  $("teamSd").textContent = agg.totalSd.toFixed(1);
+
+  const weakLabel = BBD_BANK.pillars.find(p=>p.key===agg.weakestAvg)?.label || agg.weakestAvg;
+  const strongLabel = BBD_BANK.pillars.find(p=>p.key===agg.strongestAvg)?.label || agg.strongestAvg;
+  $("teamWeak").textContent = `${weakLabel} (${agg.pillarAvgs[agg.weakestAvg].toFixed(1)}/50)`;
+  $("teamStrong").textContent = `${strongLabel} (${agg.pillarAvgs[agg.strongestAvg].toFixed(1)}/50)`;
+
+  // narrative uses correct lens: take majority lens among filtered? We'll use current effective mode (from welcome audience).
+  // Better: if org uses multiple audiences, use "corporate" fallback. Here we use effectiveMode().
+  const m = effectiveMode();
+  $("teamNarrative").textContent = (BBD_BANK.narrativeMap.pillarFailureNarratives[agg.weakestAvg]?.[m]) || "—";
+
+  // pillar tiles
+  const row = $("teamPillarsRow");
+  row.innerHTML = "";
+  for(const p of BBD_BANK.pillars){
+    const tile = document.createElement("div");
+    tile.className = "picon";
+    tile.innerHTML = `
+      <div style="display:flex; gap:10px; align-items:center">
+        ${iconSVG(p.key)}
+        <div>
+          <div class="name">${p.label} (avg)</div>
+          <div class="score">${agg.pillarAvgs[p.key].toFixed(1)} <span class="muted" style="font-size:12px">/50</span></div>
+          <div class="small">Condition: <b>${pillarCondition(Math.round(agg.pillarAvgs[p.key]))}</b></div>
+        </div>
+      </div>
+    `;
+    row.appendChild(tile);
+  }
+
+  // roster table
+  const tbody = $("rosterTable").querySelector("tbody");
+  tbody.innerHTML = "";
+  for(const r of filtered){
+    const tr = document.createElement("tr");
+    const when = (r.timestamp||"").replace("T"," ").slice(0,16);
+    const weak = BBD_BANK.pillars.find(p=>p.key===r.scores?.weakest)?.label || r.scores?.weakest || "—";
+    tr.innerHTML = `
+      <td>${escapeHTML(r.respondent?.name||"—")}</td>
+      <td>${escapeHTML(r.respondent?.role||"—")}</td>
+      <td>${escapeHTML(r.respondent?.unit||"—")}</td>
+      <td>${escapeHTML(r.respondent?.group||"—")}</td>
+      <td>${r.scores?.total ?? "—"}</td>
+      <td>${escapeHTML(weak)}</td>
+      <td>${escapeHTML(when)}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  syncSidebar();
+}
+function escapeHTML(s){
+  return (s||"").toString()
+    .replaceAll("&","&amp;").replaceAll("<","&lt;")
+    .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+$("refreshTeamBtn").onclick = refreshTeam;
+$("teamReportBtn").onclick = ()=>{ refreshTeam(); setTab("team"); window.print(); };
+
+/* =========================================================
+   Export/Import JSON (A2)
+   ========================================================= */
+function exportJSON(){
+  const roster = getRoster();
+  const blob = new Blob([JSON.stringify(roster,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "built-by-design_responses.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importJSON(file){
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const incoming = JSON.parse(reader.result);
+      if(!Array.isArray(incoming)) throw new Error("Invalid JSON format (expected array).");
+      const roster = getRoster();
+      const map = new Map(roster.map(r=>[r.id,r]));
+      for(const r of incoming){
+        if(r && r.id) map.set(r.id,r);
+      }
+      saveRoster([...map.values()]);
+      alert(`Imported. Total responses on this device: ${getRoster().length}`);
+      refreshTeam();
+    }catch(e){
+      alert("Import failed: " + e.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+$("exportJsonBtn").onclick = exportJSON;
+$("exportJsonBtn2").onclick = exportJSON;
+
+function wireImport(btnId){
+  $(btnId).onclick = ()=>{ $("importFile").click(); };
+}
+wireImport("importJsonBtn");
+wireImport("importJsonBtn2");
+$("importFile").addEventListener("change", (e)=>{
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  importJSON(f);
+  e.target.value = "";
+});
+
+/* =========================================================
+   Tab access shortcuts
+   ========================================================= */
+$("teamReportBtn").addEventListener("click", ()=>{});
+$("toReportBtn").addEventListener("click", ()=>{});
+$("backToTeamBtn").addEventListener("click", ()=>{});
+
+/* =========================================================
+   On load: draft
+   ========================================================= */
+(function boot(){
+  try{
+    localStorage.setItem("__bbd_test","1");
+    localStorage.removeItem("__bbd_test");
+    $("deviceStatus").textContent = "Local Storage: Ready";
+  }catch(e){
+    $("deviceStatus").textContent = "Local Storage: BLOCKED (private mode?)";
+  }
+
+  const d = loadDraft();
+  if(d){
+    state = d;
+    if(!state.answers || !Object.keys(state.answers).length) initAnswers();
+    $("orgName").value = state.orgName || "";
+    $("audienceType").value = state.audienceType || "School District";
+    $("lensOverride").value = state.lensOverride || "auto";
+    $("respName").value = state.respondent?.name || "";
+    $("respTitle").value = state.respondent?.title || "";
+    $("respRole").value = state.respondent?.role || "Player";
+    $("respUnit").value = state.respondent?.unit || "General";
+    $("respGroup").value = state.respondent?.group || "";
+    $("respJersey").value = state.respondent?.jersey || "";
+    $("respDate").value = state.respondent?.date || "";
+    $("respNotes").value = state.respondent?.notes || "";
+  }
+  syncSidebar();
+  setTab("welcome");
+})();
+</script>
+</body>
+</html>
