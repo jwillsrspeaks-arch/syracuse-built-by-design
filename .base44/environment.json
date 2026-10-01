@@ -2,5 +2,11 @@
   "previewPort": 3000,
   "healthPath": "/",
   "startCommand": "docker compose -f docker-compose.base44.yml up -d",
-  "secrets": []
+  "secrets": [
+    {
+      "name": "DASHBOARD_PASSWORD",
+      "description": "Passcode for the live results dashboard at /dashboard (chosen by the user in the Secrets page).",
+      "requiredAtBoot": false
+    }
+  ]
 }

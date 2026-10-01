@@ -900,6 +900,64 @@ const TEAM_KEY  = "bbd_team_roster_v1";
 const DRAFT_KEY = "bbd_current_draft_v1";
 
 /* =========================================================
+   Server sync (realtime capture — save on navigation)
+   ========================================================= */
+async function bbdApi(path, method, body){
+  const res = await fetch("/api" + path, {
+    method: method || "GET",
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : null
+  });
+  if(!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
+function serverPayload(completed){
+  return {
+    orgName: state.orgName || "",
+    audienceType: state.audienceType || "",
+    lensOverride: state.lensOverride || "auto",
+    team: (state.respondent.group || "").trim(),
+    respondent: state.respondent,
+    answers: state.answers,
+    cursor: state.cursor,
+    completed: completed === undefined ? (totalAnswered() >= totalQuestions()) : completed
+  };
+}
+function rememberSessionId(id){
+  state.sessionId = id || null;
+  if(id) localStorage.setItem(SESSION_KEY, id); else localStorage.removeItem(SESSION_KEY);
+}
+async function createServerSession(){
+  const data = await bbdApi("/session", "POST", serverPayload(false));
+  rememberSessionId(data.id);
+  return data;
+}
+function syncToServer(completed){
+  if(!state.sessionId) return Promise.resolve();
+  return bbdApi("/session/" + state.sessionId, "PUT", serverPayload(completed))
+    .catch(()=>{ /* server unreachable — local draft still holds progress */ });
+}
+async function restoreFromServer(){
+  const sid = localStorage.getItem(SESSION_KEY);
+  if(!sid) return null;
+  try{
+    const data = await bbdApi("/session/" + sid);
+    state = {
+      orgName: data.orgName || "",
+      audienceType: data.audienceType || "School District",
+      lensOverride: data.lensOverride || "auto",
+      respondent: Object.assign({name:"",title:"",role:"Player",unit:"General",group:"",jersey:"",date:"",notes:""}, data.respondent || {}),
+      answers: data.answers || {},
+      cursor: data.cursor || {p:0,q:0},
+      sessionId: sid
+    };
+    if(!state.answers || !Object.keys(state.answers).length) initAnswers();
+    return data;
+  }catch(e){ return null; }
+}
+const SESSION_KEY = "bbd_session_id_v1";
+
+/* =========================================================
    State
    ========================================================= */
 let MODE = "corporate"; // active lens for rendering (athletic/education/corporate/church)
@@ -909,7 +967,8 @@ let state = {
   lensOverride: "auto",
   respondent: { name:"", title:"", role:"Player", unit:"General", group:"", jersey:"", date:"", notes:"" },
   answers: {}, // { pillarKey: [10 numbers] }
-  cursor: { p:0, q:0 } // pillar index, question index
+  cursor: { p:0, q:0 }, // pillar index, question index
+  sessionId: null // server session id (realtime capture)
 };
 
 const PILLARS = BBD_BANK.pillars.map(p => ({key:p.key, label:p.label}));
@@ -1134,6 +1193,7 @@ function syncSidebar(){
   $("currentLensText").textContent = `${MODE}`;
   $("currentRespText").textContent = state.respondent.name ? state.respondent.name : "—";
   $("currentProgText").textContent = `${totalAnswered()} / ${totalQuestions()}`;
+  $("deviceStatus").textContent = state.sessionId ? "Server Sync: Active" : "Server Sync: Pending";
 }
 
 /* =========================================================
@@ -1237,13 +1297,15 @@ function next(){
     state.cursor.p++;
     state.cursor.q = 0;
   }else{
-    // end
+    // end — final sync marks this participant complete on the server
     saveDraft();
+    syncToServer(true);
     buildResults();
     setTab("results");
     return;
   }
   saveDraft();
+  syncToServer();
   renderQuestion();
 }
 function prev(){
@@ -1256,11 +1318,12 @@ function prev(){
     state.cursor.q = BBD_BANK.pillars[state.cursor.p].questions.length - 1;
   }
   saveDraft();
+  syncToServer();
   renderQuestion();
 }
 $("nextBtn").onclick = next;
 $("prevBtn").onclick = prev;
-$("exitBtn").onclick = ()=>{ saveDraft(); setTab("welcome"); };
+$("exitBtn").onclick = ()=>{ saveDraft(); syncToServer(); setTab("welcome"); };
 
 $("jumpBtn").onclick = ()=>{
   const names = BBD_BANK.pillars.map((p,i)=>`${i+1}) ${p.label}`).join("\n");
@@ -1270,13 +1333,14 @@ $("jumpBtn").onclick = ()=>{
   state.cursor.p = n-1;
   state.cursor.q = 0;
   saveDraft();
+  syncToServer();
   renderQuestion();
 };
 
 /* =========================================================
    Start/Resume/Reset
    ========================================================= */
-$("startBtn").onclick = ()=>{
+$("startBtn").onclick = async ()=>{
   pullWelcomeIntoState();
   if(!state.respondent.name){
     alert("Respondent Name is required for A2 team collection.");
@@ -1290,15 +1354,28 @@ $("startBtn").onclick = ()=>{
     initAnswers();
     state.cursor = {p:0,q:0};
   }
+  try{
+    if(!state.sessionId) await createServerSession();
+    await syncToServer(false);
+  }catch(e){
+    alert("Could not reach the server (" + e.message + "). Progress will be kept on this device and synced later.");
+  }
   saveDraft();
   setTab("assess");
   renderQuestion();
 };
-$("resumeBtn").onclick = ()=>{
-  const d = loadDraft();
-  if(!d){ alert("No draft found on this device."); return; }
-  state = d;
-  if(!state.answers || !Object.keys(state.answers).length) initAnswers();
+$("resumeBtn").onclick = async ()=>{
+  let restoredFromServer = false;
+  try{
+    const data = await restoreFromServer();
+    restoredFromServer = !!data;
+  }catch(e){ /* fall back to local draft */ }
+  if(!restoredFromServer){
+    const d = loadDraft();
+    if(!d){ alert("No draft found on this device or server."); return; }
+    state = d;
+    if(!state.answers || !Object.keys(state.answers).length) initAnswers();
+  }
   $("orgName").value = state.orgName || "";
   $("audienceType").value = state.audienceType || "School District";
   $("lensOverride").value = state.lensOverride || "auto";
@@ -1379,6 +1456,8 @@ $("newRespondentBtn").onclick = ()=>{
   // Clear answers for next person, keep org/audience/lens
   initAnswers();
   state.cursor = {p:0,q:0};
+  state.sessionId = null; // next respondent gets their own server session
+  rememberSessionId(null);
   // clear respondent fields
   state.respondent.name = "";
   state.respondent.title = "";

@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>BUILT BY DESIGN™ — Live Results Dashboard</title>
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#111824; --panel2:#0f1621; --text:#f2f4f7;
+      --muted:#9aa6b2; --line:rgba(255,255,255,.10); --gold:#d7b46a;
+      --ok:#6ea77a; --warn:#d7b46a; --bad:#b35a5a;
+      --shadow: 0 18px 45px rgba(0,0,0,.45); --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; color:var(--text); font-family:var(--sans); min-height:100vh;
+      background:
+        radial-gradient(1200px 800px at 20% 0%, rgba(215,180,106,.10), transparent 60%),
+        radial-gradient(1000px 700px at 90% 20%, rgba(110,167,122,.08), transparent 55%),
+        linear-gradient(180deg, #070a0f, var(--bg));
+    }
+    .wrap{max-width:1180px; margin:0 auto; padding:28px 18px 80px}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:14px;
+      padding:16px 18px; border:1px solid var(--line); border-radius:18px;
+      background:linear-gradient(180deg, rgba(17,24,36,.86), rgba(10,14,20,.72));
+      box-shadow:var(--shadow); backdrop-filter: blur(10px);
+    }
+    .brand{display:flex; gap:14px; align-items:center}
+    .mark{
+      width:44px; height:44px; border-radius:12px; border:1px solid rgba(215,180,106,.45);
+      background:
+        radial-gradient(circle at 30% 30%, rgba(215,180,106,.30), transparent 60%),
+        linear-gradient(180deg, rgba(215,180,106,.16), rgba(0,0,0,.0));
+      display:grid; place-items:center; font-weight:800; color:var(--gold);
+      font-family:var(--mono); font-size:18px;
+    }
+    .title{font-size:18px; font-weight:800; letter-spacing:.06em}
+    .sub{font-size:12px; color:var(--muted)}
+    .badge{
+      display:inline-flex; align-items:center; gap:8px; padding:6px 12px;
+      border:1px solid var(--line); border-radius:999px; font-size:12px;
+      background:rgba(255,255,255,.03);
+    }
+    .dot{width:9px; height:9px; border-radius:50%; background:var(--bad); display:inline-block}
+    .dot.ok{background:var(--ok)} .dot.live{background:var(--ok); animation:pulse 1.6s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+    .statsRow{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:18px}
+    .stat{
+      background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+      padding:18px; box-shadow:var(--shadow);
+    }
+    .stat .label{font-size:11px; text-transform:uppercase; letter-spacing:.14em; color:var(--muted)}
+    .stat .n{font-size:30px; font-weight:800; margin-top:6px}
+    .teamCard{
+      background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+      padding:18px; margin-top:16px; box-shadow:var(--shadow);
+    }
+    .teamHead{display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap}
+    .teamName{font-weight:800; font-size:16px; color:var(--gold)}
+    .pillars{display:grid; grid-template-columns:repeat(7,1fr); gap:10px; margin-top:12px}
+    .picon{border:1px solid var(--line); border-radius:12px; padding:10px; background:var(--panel2)}
+    .picon .nm{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em}
+    .picon .sc{font-size:18px; font-weight:800; margin-top:2px}
+    .bar{height:6px; border-radius:6px; background:rgba(255,255,255,.08); margin-top:6px; overflow:hidden}
+    .bar > div{height:100%; background:linear-gradient(90deg, var(--gold), #e8cf94)}
+    table{width:100%; border-collapse:collapse; margin-top:12px; font-size:13px}
+    th,td{padding:9px 10px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap}
+    th{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted)}
+    td.progress{font-family:var(--mono)}
+    .cls{padding:3px 10px; border-radius:999px; font-size:11px; border:1px solid var(--line)}
+    .cls.ok{color:var(--ok); border-color:rgba(110,167,122,.5)}
+    .cls.warn{color:var(--gold); border-color:rgba(215,180,106,.5)}
+    .cls.bad{color:var(--bad); border-color:rgba(179,90,90,.5)}
+    .muted{color:var(--muted)}
+    .empty{
+      text-align:center; padding:60px 20px; color:var(--muted);
+      border:1px dashed var(--line); border-radius:var(--radius); margin-top:18px;
+    }
+    .gate{
+      max-width:420px; margin:80px auto; padding:28px; text-align:center;
+      background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+    input[type="password"]{
+      width:100%; padding:12px 14px; margin-top:14px; border-radius:12px;
+      border:1px solid var(--line); background:var(--panel2); color:var(--text); font-size:14px;
+    }
+    button{
+      padding:11px 22px; margin-top:14px; border-radius:12px; cursor:pointer;
+      border:1px solid rgba(215,180,106,.45); background:linear-gradient(180deg, rgba(215,180,106,.2), rgba(215,180,106,.08));
+      color:var(--text); font-weight:700; font-size:14px;
+    }
+    button:hover{filter:brightness(1.15)}
+    .err{color:var(--bad); font-size:13px; margin-top:10px; min-height:16px}
+    .updated{font-size:11px; color:var(--muted)}
+    @media (max-width:900px){ .statsRow{grid-template-columns:repeat(2,1fr)} .pillars{grid-template-columns:repeat(4,1fr)} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="mark">BbD</div>
+        <div>
+          <div class="title">BUILT BY DESIGN™ — LIVE RESULTS</div>
+          <div class="sub">Assessment responses captured in real time · grouped by team</div>
+        </div>
+      </div>
+      <div class="badge"><span class="dot" id="liveDot"></span><span id="liveText">Connecting…</span></div>
+    </div>
+
+    <div id="gate" class="gate">
+      <div class="title" style="margin-bottom:6px">Dashboard Access</div>
+      <div class="sub">Enter your dashboard passcode to view live results.</div>
+      <input type="password" id="keyInput" placeholder="Dashboard passcode"/>
+      <button id="unlockBtn">Unlock Dashboard</button>
+      <div class="err" id="gateErr"></div>
+    </div>
+
+    <div id="board" style="display:none">
+      <div class="statsRow">
+        <div class="stat"><div class="label">Participants</div><div class="n" id="stParticipants">0</div></div>
+        <div class="stat"><div class="label">Completed</div><div class="n" id="stCompleted">0</div></div>
+        <div class="stat"><div class="label">In Progress</div><div class="n" id="stInProgress">0</div></div>
+        <div class="stat"><div class="label">Teams</div><div class="n" id="stTeams">0</div></div>
+      </div>
+      <div id="teams"></div>
+      <div class="updated" id="lastUpdated"></div>
+    </div>
+  </div>
+
+<script>
+  const POLL_MS = 3000;
+  let key = sessionStorage.getItem("bbd_dash_key") || "";
+  let timer = null;
+
+  function clsClass(c){
+    if(c === "Built by Design") return "ok";
+    if(c === "Under Construction") return "warn";
+    return "bad";
+  }
+  function esc(s){ const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; }
+
+  function fmtTime(iso){
+    if(!iso) return "—";
+    try{ return new Date(iso).toLocaleTimeString(); }catch(e){ return "—"; }
+  }
+
+  function render(data){
+    document.getElementById("gate").style.display = "none";
+    const board = document.getElementById("board");
+    board.style.display = "";
+
+    document.getElementById("stParticipants").textContent = data.summary.participants;
+    document.getElementById("stCompleted").textContent = data.summary.completed;
+    document.getElementById("stInProgress").textContent = data.summary.inProgress;
+    document.getElementById("stTeams").textContent = data.summary.teams;
+
+    const wrap = document.getElementById("teams");
+    wrap.innerHTML = "";
+
+    if(!data.teams.length){
+      wrap.innerHTML = `<div class="empty">No responses yet. As soon as someone starts the assessment, their answers appear here — saved on every navigation step.</div>`;
+    }
+
+    for(const t of data.teams){
+      const card = document.createElement("div");
+      card.className = "teamCard";
+      const pillars = Object.entries(t.avgPillars).map(([k, v]) => `
+        <div class="picon">
+          <div class="nm">${esc(k)}</div>
+          <div class="sc">${v.toFixed(1)}<span class="muted" style="font-size:11px">/50</span></div>
+          <div class="bar"><div style="width:${(v/50)*100}%"></div></div>
+        </div>`).join("");
+      const rows = t.participants.map(p => `
+        <tr>
+          <td><b>${esc(p.name)}</b><div class="muted" style="font-size:11px">${esc(p.title || p.role)}</div></td>
+          <td>${esc(p.role)}</td>
+          <td>${esc(p.unit)}</td>
+          <td class="progress">${p.answered} / ${p.totalQuestions}</td>
+          <td>${p.completedAt ? esc(p.total) + " / 350" : `<span class="muted">in progress</span>`}</td>
+          <td>${p.classification ? `<span class="cls ${clsClass(p.classification)}">${esc(p.classification)}</span>` : `<span class="muted">—</span>`}</td>
+          <td class="progress">${fmtTime(p.updatedAt)}</td>
+        </tr>`).join("");
+      const clsBadges = Object.entries(t.classificationCounts)
+        .map(([c, n]) => `<span class="cls ${clsClass(c)}">${esc(c)} × ${n}</span>`).join(" ");
+      card.innerHTML = `
+        <div class="teamHead">
+          <div class="teamName">${esc(t.team)}</div>
+          <div>${t.participantCount} participant(s) · avg total <b>${t.avgTotal.toFixed(1)}</b> / 350 ${clsBadges}</div>
+        </div>
+        <div class="pillars">${pillars}</div>
+        <table>
+          <thead><tr><th>Name</th><th>Role</th><th>Unit</th><th>Progress</th><th>Total</th><th>Classification</th><th>Last Save</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+      wrap.appendChild(card);
+    }
+
+    document.getElementById("lastUpdated").textContent =
+      `Updated ${new Date().toLocaleTimeString()} · auto-refreshes every ${POLL_MS/1000}s`;
+  }
+
+  async function poll(){
+    try{
+      const res = await fetch("/api/dashboard", { headers: { "X-Dashboard-Key": key } });
+      if(res.status === 401){
+        sessionStorage.removeItem("bbd_dash_key");
+        key = "";
+        showGate("Passcode rejected. Try again.");
+        return;
+      }
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      document.getElementById("liveDot").className = "dot live";
+      document.getElementById("liveText").textContent = "Live";
+      render(await res.json());
+    }catch(e){
+      document.getElementById("liveDot").className = "dot";
+      document.getElementById("liveText").textContent = "Reconnecting…";
+    }
+  }
+
+  function showGate(err){
+    document.getElementById("board").style.display = "none";
+    document.getElementById("gate").style.display = "";
+    document.getElementById("gateErr").textContent = err || "";
+  }
+
+  function unlock(){
+    key = document.getElementById("keyInput").value.trim();
+    if(!key) { document.getElementById("gateErr").textContent = "Enter a passcode."; return; }
+    sessionStorage.setItem("bbd_dash_key", key);
+    poll();
+  }
+
+  document.getElementById("unlockBtn").onclick = unlock;
+  document.getElementById("keyInput").addEventListener("keydown", e => { if(e.key === "Enter") unlock(); });
+
+  if(key){
+    poll();
+  }
+  timer = setInterval(() => { if(key) poll(); }, POLL_MS);
+</script>
+</body>
+</html>
