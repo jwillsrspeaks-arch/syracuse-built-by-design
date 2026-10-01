@@ -149,6 +149,40 @@
     try{ return new Date(iso).toLocaleTimeString(); }catch(e){ return "—"; }
   }
 
+  function pillarChart(t){
+    const entries = Object.entries(t.avgPillars);
+    if(!entries.length) return "";
+    const spread = t.participants.map(p => p.pillarScores || {});
+    const W = 640, H = 190, pad = 30, top = 30, base = H - 34;
+    const bw = (W - pad * 2) / entries.length;
+    const y = v => base - (v / 70) * (base - top);
+    const maxV = Math.max(...entries.map(e => e[1]));
+    const minV = Math.min(...entries.map(e => e[1]));
+    let bars = "", ranges = "";
+    entries.forEach(([k, v], i) => {
+      const cx = pad + i * bw + bw / 2, x = cx - bw * 0.32, w = bw * 0.64;
+      const lows = spread.map(s => s[k]).filter(n => typeof n === "number");
+      const lo = lows.length ? Math.min(...lows) : v, hi = lows.length ? Math.max(...lows) : v;
+      const color = v === maxV && maxV !== minV ? "var(--ok)" : v === minV && maxV !== minV ? "var(--bad)" : "var(--gold)";
+      bars += `
+        <rect x="${x.toFixed(1)}" y="${y(v).toFixed(1)}" width="${w.toFixed(1)}" height="${(base - y(v)).toFixed(1)}" rx="6" fill="${color}" opacity=".8"/>
+        <text x="${cx.toFixed(1)}" y="${(y(v) - 6).toFixed(1)}" text-anchor="middle" font-size="11.5" font-weight="700" fill="${color}">${v.toFixed(1)}</text>
+        <text x="${cx.toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="9" letter-spacing=".08em" fill="var(--muted)">${esc(k.toUpperCase())}</text>`;
+      if(lows.length > 1 && hi > lo){
+        ranges += `
+          <line x1="${cx}" y1="${y(hi).toFixed(1)}" x2="${cx}" y2="${y(lo).toFixed(1)}" stroke="rgba(255,255,255,.35)" stroke-width="1.5"/>
+          <line x1="${(cx-5).toFixed(1)}" y1="${y(hi).toFixed(1)}" x2="${(cx+5).toFixed(1)}" y2="${y(hi).toFixed(1)}" stroke="rgba(255,255,255,.35)"/>
+          <line x1="${(cx-5).toFixed(1)}" y1="${y(lo).toFixed(1)}" x2="${(cx+5).toFixed(1)}" y2="${y(lo).toFixed(1)}" stroke="rgba(255,255,255,.35)"/>`;
+      }
+    });
+    return `
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;margin-top:14px" role="img" aria-label="Average participant score per pillar">
+        <line x1="${pad}" y1="${base}" x2="${W - pad}" y2="${base}" stroke="var(--line)"/>
+        ${ranges}${bars}
+      </svg>
+      <div class="muted" style="font-size:11px;margin-top:4px">Average score per pillar (0–70) · whiskers show lowest–highest participant · <span style="color:var(--ok)">green</span> = team strength · <span style="color:var(--bad)">red</span> = growth area</div>`;
+  }
+
   function render(data){
     document.getElementById("gate").style.display = "none";
     const board = document.getElementById("board");
@@ -193,6 +227,7 @@
           <div>${t.participantCount} participant(s) · avg total <b>${t.avgTotal.toFixed(1)}</b> / 490 ${clsBadges}</div>
         </div>
         <div class="pillars">${pillars}</div>
+        ${pillarChart(t)}
         <table>
           <thead><tr><th>Name</th><th>Role</th><th>Unit</th><th>Progress</th><th>Total</th><th>Classification</th><th>Last Save</th></tr></thead>
           <tbody>${rows}</tbody>
