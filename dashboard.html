@@ -66,6 +66,14 @@
     .picon .sc{font-size:18px; font-weight:800; margin-top:2px}
     .bar{height:6px; border-radius:6px; background:rgba(255,255,255,.08); margin-top:6px; overflow:hidden}
     .bar > div{height:100%; background:linear-gradient(90deg, var(--gold), #e8cf94)}
+    .distRow{display:flex; align-items:center; gap:10px; margin-top:8px}
+    .distLabel{width:112px; flex:none; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted)}
+    .distBar{flex:1; display:flex; height:22px; border-radius:8px; overflow:hidden; background:rgba(255,255,255,.06)}
+    .distBar > div{min-width:0; overflow:hidden; display:grid; place-items:center; font-size:10.5px; font-weight:700; color:#0b0f14}
+    .distCount{width:30px; flex:none; text-align:right; font-size:11px; font-family:var(--mono); color:var(--muted)}
+    .distLegend{display:flex; gap:14px; flex-wrap:wrap; margin-top:12px; font-size:11px; color:var(--muted)}
+    .distLegend span{display:inline-flex; align-items:center; gap:5px}
+    .distLegend i{width:9px; height:9px; border-radius:3px; display:inline-block}
     table{width:100%; border-collapse:collapse; margin-top:12px; font-size:13px}
     th,td{padding:9px 10px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap}
     th{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted)}
@@ -130,6 +138,16 @@
         <div class="stat"><div class="label">Completed</div><div class="n" id="stCompleted">0</div></div>
         <div class="stat"><div class="label">In Progress</div><div class="n" id="stInProgress">0</div></div>
         <div class="stat"><div class="label">Teams</div><div class="n" id="stTeams">0</div></div>
+      </div>
+      <div id="distCard" class="teamCard" style="display:none">
+        <div class="teamHead"><div class="teamName">Pillar Score Distribution — All Participants</div><div class="muted" style="font-size:11px">participants per condition band, 0–70 scale</div></div>
+        <div id="distChart" style="margin-top:10px"></div>
+        <div class="distLegend">
+          <span><i style="background:var(--bad)"></i>Fragile (0–34)</span>
+          <span><i style="background:#c97a4a"></i>Unstable (35–48)</span>
+          <span><i style="background:var(--warn)"></i>Reinforcing (49–62)</span>
+          <span><i style="background:var(--ok)"></i>Load-Bearing (63–70)</span>
+        </div>
       </div>
       <div id="teams"></div>
       <div class="updated" id="lastUpdated"></div>
@@ -270,6 +288,37 @@
 </html>`;
   }
 
+  const PILLAR_ORDER = ["intention","structure","standards","execution","stewardship","adaptability","succession"];
+  const BANDS = [
+    { label: "Fragile (0–34)",       color: "var(--bad)",  test: v => v < 35 },
+    { label: "Unstable (35–48)",     color: "#c97a4a",     test: v => v >= 35 && v < 49 },
+    { label: "Reinforcing (49–62)",  color: "var(--warn)", test: v => v >= 49 && v < 63 },
+    { label: "Load-Bearing (63–70)", color: "var(--ok)",   test: v => v >= 63 },
+  ];
+
+  function renderDistribution(data){
+    const card = document.getElementById("distCard");
+    const participants = data.teams.flatMap(t => t.participants);
+    if(!participants.length){ card.style.display = "none"; return; }
+    const keys = data.teams[0] && Object.keys(data.teams[0].avgPillars).length
+      ? Object.keys(data.teams[0].avgPillars) : PILLAR_ORDER;
+    const html = keys.map(k => {
+      const vals = participants.map(p => (p.pillarScores || {})[k]).filter(n => typeof n === "number");
+      const segs = BANDS.map(b => {
+        const n = vals.filter(b.test).length;
+        const pct = vals.length ? (n / vals.length) * 100 : 0;
+        return `<div style="flex:${pct.toFixed(2)};background:${b.color}" title="${b.label}: ${n} participant(s)">${n || ""}</div>`;
+      }).join("");
+      return `<div class="distRow">
+        <div class="distLabel">${esc(k)}</div>
+        <div class="distBar">${segs || '<div style="flex:1"></div>'}</div>
+        <div class="distCount">${vals.length}</div>
+      </div>`;
+    }).join("");
+    document.getElementById("distChart").innerHTML = html;
+    card.style.display = "";
+  }
+
   function render(data){
     lastData = data;
     document.getElementById("gate").style.display = "none";
@@ -280,6 +329,8 @@
     document.getElementById("stCompleted").textContent = data.summary.completed;
     document.getElementById("stInProgress").textContent = data.summary.inProgress;
     document.getElementById("stTeams").textContent = data.summary.teams;
+
+    renderDistribution(data);
 
     const wrap = document.getElementById("teams");
     wrap.innerHTML = "";
