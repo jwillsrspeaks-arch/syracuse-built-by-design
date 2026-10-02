@@ -16,7 +16,18 @@ participant session in real time, and `dashboard.html` — a live results dashbo
 - PUT /api/session/{id} — save answers + meta (called on every Next/Back/Jump/Exit)
 - GET /api/session/{id} — restore draft (used by "Resume Draft")
 - GET /api/dashboard — requires header `X-Dashboard-Key` = DASHBOARD_PASSWORD secret
+- POST /api/export/sheets — same key; posts team-summary + individual rows to a user-owned
+  Google Apps Script web app (writes to the user's Google Sheet and returns its URL)
 - GET /api/healthz
+
+## Dashboard extras
+- dashboard.html has: Download Report (self-contained HTML report via Blob download),
+  Export to Sheets (calls /api/export/sheets), an org-wide pillar distribution chart
+  (stacked bands per pillar), and a per-team SVG pillar chart (avg bars + min–max whiskers).
+- Google Sheets export secrets: GOOGLE_APPS_SCRIPT_URL (web-app URL of the script the user
+  deployed from their own spreadsheet) + GOOGLE_APPS_SCRIPT_TOKEN (shared token also pasted
+  into the script's TOKEN line). If either is unset, /api/export/sheets returns 503 with
+  setup guidance — the app boots fine without them.
 
 ## Verify
 `curl -s localhost:3000 | head -3` → doctype of the BUILT BY DESIGN page.
