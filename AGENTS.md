@@ -37,6 +37,13 @@ participant session in real time, and `dashboard.html` — a live results dashbo
   into the script's TOKEN line). If either is unset, /api/export/sheets returns 503 with
   setup guidance — the app boots fine without them.
 
+## Production deployment
+- `docker-compose.prod.yml` + root `Dockerfile` (nginx prod image baking index/dashboard) +
+  `api/Dockerfile.prod` (uvicorn, 2 workers, no --reload). Secrets via repo `.env` (copy from
+  `.env.example`, git-ignored). `DEPLOYMENT.md` documents clone → `.env` → build → TLS via
+  reverse proxy → update/backup flow. Dev stack (`docker-compose.base44.yml`) is untouched and
+  stays the source-bind-mounted live-reload setup.
+
 ## Verify
 `curl -s localhost:3000 | head -3` → doctype of the BUILT BY DESIGN page.
 `curl -s localhost:3000/api/healthz` → `{"ok": true, ...}`.
