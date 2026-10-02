@@ -18,7 +18,15 @@ participant session in real time, and `dashboard.html` — a live results dashbo
 - GET /api/dashboard — requires header `X-Dashboard-Key` = DASHBOARD_PASSWORD secret
 - POST /api/export/sheets — same key; posts team-summary + individual rows to a user-owned
   Google Apps Script web app (writes to the user's Google Sheet and returns its URL)
+- GET /api/invite/{key} — public; returns {team, audienceType} for an active invite (404 otherwise)
+- POST /api/invites, GET /api/invites, DELETE /api/invites/{key} — dashboard-key protected invite management
 - GET /api/healthz
+
+## Invite workflow
+- Dashboard "Team Invites" card: create per-team keys (BBD-XXXXXX), copy link `/?key=...`, deactivate.
+- index.html resolves ?key= (URL first, then localStorage `bbd_invite_key_v1`), locks team +
+  audience selects, and posts the inviteKey with each session; the backend forces the session's
+  team from the invite even if the client sends another. Deactivating blocks new sessions only.
 
 ## Dashboard extras
 - dashboard.html has: Download Report (self-contained HTML report via Blob download),

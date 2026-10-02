@@ -326,6 +326,10 @@
           </div>
         </div>
 
+        <div id="inviteBanner" class="hidden" style="border:1px solid rgba(215,180,106,.45); background:rgba(215,180,106,.08); border-radius:12px; padding:10px 12px; font-size:13px; margin-bottom:4px">
+          <b>Invited team:</b> <span id="inviteTeamName">—</span> — your team is set automatically; just enter your name and start.
+        </div>
+
         <label>Organization Name</label>
         <input id="orgName" placeholder="e.g., Syracuse Football / District Name / Company / Church"/>
 
@@ -920,6 +924,7 @@ const BBD_BANK = {
    ========================================================= */
 const TEAM_KEY  = "bbd_team_roster_v1";
 const DRAFT_KEY = "bbd_current_draft_v1";
+const INVITE_KEY = "bbd_invite_key_v1";
 
 /* =========================================================
    Server sync (realtime capture — save on navigation)
@@ -942,6 +947,7 @@ function serverPayload(completed){
     respondent: state.respondent,
     answers: state.answers,
     cursor: state.cursor,
+    inviteKey: state.inviteKey || "",
     completed: completed === undefined ? (totalAnswered() >= totalQuestions()) : completed
   };
 }
@@ -971,7 +977,8 @@ async function restoreFromServer(){
       respondent: Object.assign({name:"",title:"",role:"Player",unit:"General",group:"",jersey:"",date:"",notes:""}, data.respondent || {}),
       answers: data.answers || {},
       cursor: data.cursor || {p:0,q:0},
-      sessionId: sid
+      sessionId: sid,
+      inviteKey: data.inviteKey || localStorage.getItem(INVITE_KEY) || null
     };
     if(!state.answers || !Object.keys(state.answers).length) initAnswers();
     return data;
@@ -990,7 +997,8 @@ let state = {
   respondent: { name:"", title:"", role:"Player", unit:"General", group:"", jersey:"", date:"", notes:"" },
   answers: {}, // { pillarKey: [10 numbers] }
   cursor: { p:0, q:0 }, // pillar index, question index
-  sessionId: null // server session id (realtime capture)
+  sessionId: null, // server session id (realtime capture)
+  inviteKey: null // set automatically when opened via an invite link (?key=...)
 };
 
 const PILLARS = BBD_BANK.pillars.map(p => ({key:p.key, label:p.label}));
@@ -1527,7 +1535,7 @@ $("newRespondentBtn").onclick = ()=>{
   // clear respondent fields
   state.respondent.name = "";
   state.respondent.title = "";
-  state.respondent.group = "";
+  if(!state.inviteKey) state.respondent.group = ""; // keep the invite-locked team
   state.respondent.jersey = "";
   $("respName").value = "";
   $("respTitle").value = "";
@@ -1794,6 +1802,34 @@ $("backToTeamBtn").addEventListener("click", ()=>{});
 /* =========================================================
    On load: draft
    ========================================================= */
+/* =========================================================
+   Invite links (?key=BBD-XXXXXX) — lock team automatically
+   ========================================================= */
+function applyInvite(inv){
+  if(!inv) return;
+  state.inviteKey = localStorage.getItem(INVITE_KEY) || null;
+  state.respondent.group = inv.team;
+  if(inv.audienceType) state.audienceType = inv.audienceType;
+  $("respGroup").value = inv.team;
+  $("audienceType").value = inv.audienceType || state.audienceType;
+  $("audienceType").disabled = true;
+  $("lensOverride").disabled = true;
+  $("respGroup").disabled = true;
+  document.getElementById("inviteBanner").classList.remove("hidden");
+  document.getElementById("inviteTeamName").textContent = inv.team;
+  syncSidebar();
+  saveDraft();
+}
+function resolveInvite(rawKey){
+  bbdApi("/invite/" + encodeURIComponent(rawKey)).then(inv => {
+    applyInvite(inv);
+  }).catch(()=>{
+    state.inviteKey = null;
+    localStorage.removeItem(INVITE_KEY);
+    alert("This invite link is no longer valid.");
+  });
+}
+
 (function boot(){
   try{
     localStorage.setItem("__bbd_test","1");
@@ -1818,6 +1854,19 @@ $("backToTeamBtn").addEventListener("click", ()=>{});
     $("respJersey").value = state.respondent?.jersey || "";
     $("respDate").value = state.respondent?.date || "";
     $("respNotes").value = state.respondent?.notes || "";
+  }
+  const params = new URLSearchParams(location.search);
+  const urlKey = (params.get("key") || "").trim();
+  if(urlKey){
+    localStorage.setItem(INVITE_KEY, urlKey);
+    state.inviteKey = urlKey;
+    resolveInvite(urlKey);
+  } else {
+    const storedKey = localStorage.getItem(INVITE_KEY) || "";
+    if(storedKey){
+      state.inviteKey = storedKey;
+      resolveInvite(storedKey);
+    }
   }
   syncSidebar();
   setTab("welcome");

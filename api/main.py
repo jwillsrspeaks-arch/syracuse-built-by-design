@@ -5,6 +5,7 @@ serves aggregated results for the live dashboard.
 """
 import json
 import os
+import secrets
 import sqlite3
 import urllib.error
 import urllib.request
@@ -51,6 +52,14 @@ CREATE TABLE IF NOT EXISTS sessions (
     updated_at TEXT NOT NULL,
     completed_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS invites (
+    key TEXT PRIMARY KEY,
+    team TEXT NOT NULL,
+    audience_type TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1
+);
 """
 
 
@@ -66,6 +75,10 @@ def db() -> sqlite3.Connection:
 
 with db() as _c:
     _c.executescript(SCHEMA)
+    try:
+        _c.execute("ALTER TABLE sessions ADD COLUMN invite_key TEXT NOT NULL DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass  # column already exists
 
 
 def classification(total: int) -> str:
@@ -101,6 +114,7 @@ def row_to_state(row: sqlite3.Row) -> dict:
         "pillarScores": json.loads(row["pillar_scores"]),
         "totalScore": row["total_score"],
         "classification": row["classification"],
+        "inviteKey": row["invite_key"],
         "createdAt": row["created_at"],
         "updatedAt": row["updated_at"],
         "completedAt": row["completed_at"],
@@ -113,6 +127,7 @@ class SessionCreate(BaseModel):
     lensOverride: str = "auto"
     team: str = ""
     respondent: Dict[str, Any] = {}
+    inviteKey: str = ""
 
 
 class SessionSave(BaseModel):
@@ -140,15 +155,30 @@ def healthz():
 def create_session(payload: SessionCreate):
     sid = "s_" + uuid.uuid4().hex[:20]
     ts = now_iso()
+    team = payload.team
+    audience = payload.audienceType
+    invite_key = ""
+    if payload.inviteKey:
+        with db() as conn:
+            inv = conn.execute(
+                "SELECT * FROM invites WHERE key=?", (payload.inviteKey,)
+            ).fetchone()
+        if inv is None or not inv["active"]:
+            raise HTTPException(status_code=403,
+                                detail="This invite is not valid or has been deactivated.")
+        invite_key = inv["key"]
+        team = inv["team"]  # the invite locks the team
+        if inv["audience_type"]:
+            audience = inv["audience_type"]
     with db() as conn:
         conn.execute(
             """INSERT INTO sessions
                (id, org_name, audience_type, lens, team, respondent, answers, cursor,
-                created_at, updated_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?)""",
-            (sid, payload.orgName, payload.audienceType, payload.lensOverride,
-             payload.team, json.dumps(payload.respondent),
-             json.dumps({}), json.dumps({"p": 0, "q": 0}), ts, ts),
+                invite_key, created_at, updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+            (sid, payload.orgName, audience, payload.lensOverride,
+             team, json.dumps(payload.respondent),
+             json.dumps({}), json.dumps({"p": 0, "q": 0}), invite_key, ts, ts),
         )
     return {"id": sid, "savedAt": ts}
 
@@ -333,3 +363,66 @@ def export_sheets(x_dashboard_key: Optional[str] = Header(default=None)):
         "teamRows": len(team_rows) - 1,
         "individualRows": len(ind_rows) - 1,
     }
+
+
+# ---------------------------------------------------------------- invites
+INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+class InviteCreate(BaseModel):
+    team: str
+    audienceType: str = ""
+
+
+@app.post("/api/invites")
+def create_invite(payload: InviteCreate,
+                  x_dashboard_key: Optional[str] = Header(default=None)):
+    require_dashboard_key(x_dashboard_key)
+    team = payload.team.strip()
+    if not team:
+        raise HTTPException(status_code=400, detail="Team name is required.")
+    key = "BBD-" + "".join(secrets.choice(INVITE_ALPHABET) for _ in range(6))
+    ts = now_iso()
+    with db() as conn:
+        conn.execute(
+            "INSERT INTO invites (key, team, audience_type, created_at, active) VALUES (?,?,?,? ,1)",
+            (key, team, payload.audienceType, ts),
+        )
+    return {"key": key, "team": team, "audienceType": payload.audienceType,
+            "createdAt": ts}
+
+
+@app.get("/api/invites")
+def list_invites(x_dashboard_key: Optional[str] = Header(default=None)):
+    require_dashboard_key(x_dashboard_key)
+    with db() as conn:
+        rows = conn.execute(
+            """SELECT i.key, i.team, i.audience_type AS audienceType,
+                      i.created_at AS createdAt, i.active,
+                      (SELECT COUNT(*) FROM sessions s WHERE s.invite_key = i.key) AS responses
+               FROM invites i ORDER BY i.created_at DESC"""
+        ).fetchall()
+    return {"invites": [dict(r) for r in rows]}
+
+
+@app.delete("/api/invites/{key}")
+def deactivate_invite(key: str,
+                      x_dashboard_key: Optional[str] = Header(default=None)):
+    require_dashboard_key(x_dashboard_key)
+    with db() as conn:
+        cur = conn.execute("UPDATE invites SET active=0 WHERE key=?", (key,))
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Invite not found")
+    return {"ok": True}
+
+
+@app.get("/api/invite/{key}")
+def lookup_invite(key: str):
+    """Public: participants open the invite link with ?key=... — returns the locked team."""
+    with db() as conn:
+        row = conn.execute(
+            "SELECT team, audience_type, active FROM invites WHERE key=?", (key,)
+        ).fetchone()
+    if row is None or not row["active"]:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    return {"team": row["team"], "audienceType": row["audience_type"]}

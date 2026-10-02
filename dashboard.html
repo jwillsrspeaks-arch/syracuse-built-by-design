@@ -74,6 +74,12 @@
     .distLegend{display:flex; gap:14px; flex-wrap:wrap; margin-top:12px; font-size:11px; color:var(--muted)}
     .distLegend span{display:inline-flex; align-items:center; gap:5px}
     .distLegend i{width:9px; height:9px; border-radius:3px; display:inline-block}
+    #inviteTeam, #inviteAudience{
+      background:var(--panel2); border:1px solid var(--line); color:var(--text);
+      border-radius:12px; padding:10px 12px; font-size:14px; outline:none;
+    }
+    #inviteTeam:focus, #inviteAudience:focus{ border-color:rgba(215,180,106,.55) }
+    #inviteList button{margin-top:0; padding:6px 10px; font-size:12px}
     table{width:100%; border-collapse:collapse; margin-top:12px; font-size:13px}
     th,td{padding:9px 10px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap}
     th{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted)}
@@ -138,6 +144,26 @@
         <div class="stat"><div class="label">Completed</div><div class="n" id="stCompleted">0</div></div>
         <div class="stat"><div class="label">In Progress</div><div class="n" id="stInProgress">0</div></div>
         <div class="stat"><div class="label">Teams</div><div class="n" id="stTeams">0</div></div>
+      </div>
+      <div id="inviteCard" class="teamCard">
+        <div class="teamHead">
+          <div class="teamName">Team Invites</div>
+          <div class="muted" style="font-size:11px">send each team its link + key — participants join automatically</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px">
+          <input id="inviteTeam" placeholder="Team name (e.g., Varsity)" style="flex:1; min-width:200px"/>
+          <select id="inviteAudience">
+            <option value="">Audience type (optional lock)</option>
+            <option value="School District">School District</option>
+            <option value="School">School</option>
+            <option value="Athletic Program">Athletic Program</option>
+            <option value="Business">Business</option>
+            <option value="Nonprofit">Nonprofit</option>
+            <option value="Church">Church</option>
+          </select>
+          <button id="createInviteBtn">Create Invite</button>
+        </div>
+        <div id="inviteList" style="margin-top:12px"></div>
       </div>
       <div id="distCard" class="teamCard" style="display:none">
         <div class="teamHead"><div class="teamName">Pillar Score Distribution — All Participants</div><div class="muted" style="font-size:11px">participants per condition band, 0–70 scale</div></div>
@@ -319,6 +345,70 @@
     card.style.display = "";
   }
 
+  async function loadInvites(){
+    try{
+      const res = await fetch("/api/invites", { headers: { "X-Dashboard-Key": key } });
+      if(!res.ok) return;
+      const data = await res.json();
+      const list = document.getElementById("inviteList");
+      if(!data.invites.length){
+        list.innerHTML = `<div class="muted" style="font-size:12px">No invites yet — create one, then email the copied link to the team.</div>`;
+        return;
+      }
+      list.innerHTML = `<table>
+        <thead><tr><th>Key</th><th>Team</th><th>Audience Lock</th><th>Created</th><th>Responses</th><th>Status</th><th></th></tr></thead>
+        <tbody>${data.invites.map(i => `
+          <tr>
+            <td class="progress"><b>${esc(i.key)}</b></td>
+            <td>${esc(i.team)}</td>
+            <td class="muted">${esc(i.audienceType || "—")}</td>
+            <td class="progress">${esc((i.createdAt || "").slice(0, 10))}</td>
+            <td class="progress">${i.responses}</td>
+            <td>${i.active ? `<span class="cls ok">active</span>` : `<span class="cls bad">inactive</span>`}</td>
+            <td>
+              <button class="copyInvite" data-key="${esc(i.key)}">Copy Link</button>
+              ${i.active ? `<button class="deInvite danger" data-key="${esc(i.key)}">Deactivate</button>` : ""}
+            </td>
+          </tr>`).join("")}</tbody></table>`;
+      list.querySelectorAll(".copyInvite").forEach(b => b.onclick = async () => {
+        const link = location.origin + "/?key=" + b.dataset.key;
+        try{ await navigator.clipboard.writeText(link); }
+        catch(e){ prompt("Copy this invite link:", link); }
+        alert("Invite link copied to clipboard:\n" + link + "\n\nKey: " + b.dataset.key);
+      });
+      list.querySelectorAll(".deInvite").forEach(b => b.onclick = async () => {
+        if(!confirm("Deactivate invite " + b.dataset.key + "? New participants can no longer join; those already started keep their results.")) return;
+        await fetch("/api/invites/" + b.dataset.key, { method: "DELETE", headers: { "X-Dashboard-Key": key } });
+        loadInvites();
+      });
+    }catch(e){ /* dashboard still works if invites fail */ }
+  }
+
+  document.getElementById("createInviteBtn").onclick = async () => {
+    const input = document.getElementById("inviteTeam");
+    const team = input.value.trim();
+    if(!team){ alert("Enter a team name first."); return; }
+    const btn = document.getElementById("createInviteBtn");
+    btn.disabled = true;
+    try{
+      const res = await fetch("/api/invites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Dashboard-Key": key },
+        body: JSON.stringify({ team, audienceType: document.getElementById("inviteAudience").value })
+      });
+      const body = await res.json().catch(() => ({}));
+      if(!res.ok){ alert("Could not create invite: " + (body.detail || ("HTTP " + res.status))); return; }
+      input.value = "";
+      document.getElementById("inviteAudience").value = "";
+      await loadInvites();
+      const link = location.origin + "/?key=" + body.key;
+      try{ await navigator.clipboard.writeText(link); }catch(e){}
+      alert(`Invite created for "${team}".\n\nKey: ${body.key}\nLink (copied to clipboard): ${link}\n\nEmail this link to the team.`);
+    }finally{
+      btn.disabled = false;
+    }
+  };
+
   function render(data){
     lastData = data;
     document.getElementById("gate").style.display = "none";
@@ -390,6 +480,7 @@
       if(!res.ok) throw new Error("HTTP " + res.status);
       document.getElementById("liveDot").className = "dot live";
       document.getElementById("liveText").textContent = "Live";
+      if(!lastData) loadInvites();
       render(await res.json());
     }catch(e){
       document.getElementById("liveDot").className = "dot";
