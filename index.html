@@ -273,6 +273,23 @@
     .right{display:flex; justify-content:flex-end}
     .hidden{display:none !important}
 
+    /* ===== WELCOME HERO ===== */
+    .welcomeHero{
+      border:1px solid rgba(215,180,106,.30); border-radius:var(--radius);
+      padding:24px 22px 20px; margin-bottom:4px;
+      background:linear-gradient(135deg, rgba(215,180,106,.14), rgba(215,180,106,.03) 55%, rgba(110,167,122,.07));
+    }
+    .heroTitle{ font-family:var(--serif); font-size:26px; line-height:1.22; margin:10px 0 }
+    .heroLead{ margin:0; color:var(--muted); font-size:14px; line-height:1.6; max-width:64ch }
+    .heroFacts{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-top:18px }
+    .fact{ display:flex; gap:10px; align-items:center; border:1px solid var(--line); border-radius:12px; padding:10px 12px; background:rgba(10,14,20,.40) }
+    .fact > span{ font-family:var(--serif); font-size:22px; color:var(--gold); min-width:34px; text-align:center }
+    .fact b{ color:var(--text); font-size:12.5px }
+    .fact div{ font-size:11px; color:var(--muted); line-height:1.35 }
+    .hint.inviteOk{ color:rgba(110,167,122,.95) }
+    .hint.inviteBad{ color:rgba(179,90,90,.95) }
+    details#lensDetails summary{ user-select:none }
+
     /* PRINT */
     @media print{
       body{background:#fff !important; color:#000}
@@ -315,11 +332,24 @@
     <div class="panel" id="mainPanel">
       <!-- WELCOME -->
       <div id="welcomePanel">
+        <!-- HERO -->
+        <div class="welcomeHero">
+          <div class="kicker">BUILT BY DESIGN™ · STRUCTURAL ASSESSMENT</div>
+          <h2 class="heroTitle">Welcome — let’s see how your organization is built.</h2>
+          <p class="heroLead">This diagnostic measures how your team holds up under pressure across seven structural pillars — Intention, Structure, Standards, Execution, Stewardship, Adaptability, and Succession. There are no right or wrong answers: answer honestly and go with your first instinct. Your progress saves automatically as you go, and at the end you’ll see exactly where pressure will break down first.</p>
+          <div class="heroFacts">
+            <div class="fact"><span>7</span><div><b>Pillars</b><br/>one theme at a time</div></div>
+            <div class="fact"><span>70</span><div><b>Questions</b><br/>about 15 minutes</div></div>
+            <div class="fact"><span>1–5</span><div><b>Agree scale</b><br/>first instinct is best</div></div>
+            <div class="fact"><span>✓</span><div><b>Autosaved</b><br/>leave &amp; resume anytime</div></div>
+          </div>
+        </div>
+
         <div class="panelTitle">
           <div>
             <div class="kicker">STEP 1</div>
-            <h2>Welcome / Organization Info</h2>
-            <div class="small">Choose audience type to automatically switch wording: Athletic / Educational / Corporate (includes Nonprofits) / Church.</div>
+            <h2>Enter Your Team Details</h2>
+            <div class="small">Your facilitator gave you a <b>team name</b> and an <b>invite key</b> (BBD-XXXXXX). Enter both so your answers are grouped with your team. No key? You can still take the assessment on your own.</div>
           </div>
           <div class="meta">
             <div class="badge"><span class="dot warn"></span><span id="modeBadge">Mode: Auto</span></div>
@@ -332,36 +362,21 @@
           <div style="font-size:14px; opacity:.85">Your team and audience are locked in automatically — just enter your name and start. Your progress saves live as you go.</div>
         </div>
 
-        <label>Organization Name</label>
-        <input id="orgName" placeholder="e.g., Syracuse Football / District Name / Company / Church"/>
-
         <div class="row">
           <div>
-            <label>Audience Type</label>
-            <select id="audienceType">
-              <option value="School District">School District</option>
-              <option value="School">School</option>
-              <option value="Athletic Program">Athletic Program</option>
-              <option value="Business">Business</option>
-              <option value="Nonprofit">Nonprofit</option>
-              <option value="Church">Church</option>
-            </select>
+            <label>Team / Organization Name</label>
+            <input id="orgName" placeholder="e.g., Syracuse Football / District Name / Company / Church"/>
           </div>
           <div>
-            <label>Language Lens (optional override)</label>
-            <select id="lensOverride">
-              <option value="auto">Auto (from Audience Type)</option>
-              <option value="athletic">Athletic</option>
-              <option value="education">Educational</option>
-              <option value="corporate">Corporate/Nonprofit</option>
-              <option value="church">Church</option>
-            </select>
+            <label>Invite Key (optional)</label>
+            <input id="inviteKeyInput" placeholder="BBD-XXXXXX" style="font-family:var(--mono); text-transform:uppercase; letter-spacing:.08em"/>
+            <div class="hint" id="inviteKeyHint">On your invite card — locks your team and audience type automatically.</div>
           </div>
         </div>
 
         <div class="row">
           <div>
-            <label>Respondent Name (required for A2 multi-respondent)</label>
+            <label>Your Name (required)</label>
             <input id="respName" placeholder="First Last"/>
           </div>
           <div>
@@ -419,6 +434,34 @@
             <input id="respNotes" placeholder="Anything you want captured for context"/>
           </div>
         </div>
+
+        <details id="lensDetails" style="margin-top:14px">
+          <summary style="cursor:pointer; color:var(--muted); font-size:12px">Organization Type &amp; Language Lens (auto-configured — open to override)</summary>
+          <div class="row" style="margin-top:10px">
+            <div>
+              <label>Audience Type</label>
+              <select id="audienceType">
+                <option value="School District">School District</option>
+                <option value="School">School</option>
+                <option value="Athletic Program">Athletic Program</option>
+                <option value="Business">Business</option>
+                <option value="Nonprofit">Nonprofit</option>
+                <option value="Church">Church</option>
+              </select>
+            </div>
+            <div>
+              <label>Language Lens (optional override)</label>
+              <select id="lensOverride">
+                <option value="auto">Auto (from Audience Type)</option>
+                <option value="athletic">Athletic</option>
+                <option value="education">Educational</option>
+                <option value="corporate">Corporate/Nonprofit</option>
+                <option value="church">Church</option>
+              </select>
+            </div>
+          </div>
+          <div class="hint">Question wording adapts to your organization type: Athletic / Educational / Corporate (includes Nonprofits) / Church.</div>
+        </details>
 
         <div class="btnbar">
           <button id="startBtn">Start Assessment</button>
@@ -1441,11 +1484,27 @@ $("jumpBtn").onclick = ()=>{
 /* =========================================================
    Start/Resume/Reset
    ========================================================= */
+$("inviteKeyInput").addEventListener("input", (e)=>{ e.target.value = e.target.value.toUpperCase(); });
+
 $("startBtn").onclick = async ()=>{
   pullWelcomeIntoState();
   if(!state.respondent.name){
     alert("Respondent Name is required for A2 team collection.");
     return;
+  }
+  const keyEntered = ($("inviteKeyInput").value || "").trim().toUpperCase();
+  if(keyEntered && keyEntered !== (state.inviteKey || "")){
+    try{
+      const inv = await bbdApi("/invite/" + encodeURIComponent(keyEntered));
+      state.inviteKey = keyEntered;
+      localStorage.setItem(INVITE_KEY, keyEntered);
+      applyInvite(inv);
+    }catch(e){
+      $("inviteKeyHint").textContent = "Invite key not recognized \u2014 check with your facilitator or continue without a key.";
+      $("inviteKeyHint").classList.remove("inviteOk"); $("inviteKeyHint").classList.add("inviteBad");
+      alert("That invite key was not recognized. Double-check it with your facilitator, or clear the field to continue without a key.");
+      return;
+    }
   }
   if(!state.orgName){
     if(!confirm("Organization name is blank. Continue anyway?")) return;
@@ -1842,6 +1901,12 @@ function applyInvite(inv){
   $("audienceType").disabled = true;
   $("lensOverride").disabled = true;
   $("respGroup").disabled = true;
+  $("inviteKeyInput").disabled = true;
+  $("inviteKeyInput").value = state.inviteKey || "";
+  if(!$("orgName").value.trim()){ state.orgName = inv.team; $("orgName").value = inv.team; }
+  const ikHint = $("inviteKeyHint");
+  ikHint.textContent = "Invite key verified \u2014 team locked to \u201C" + inv.team + "\u201D.";
+  ikHint.classList.remove("inviteBad"); ikHint.classList.add("inviteOk");
   document.getElementById("inviteBanner").classList.remove("hidden");
   document.getElementById("inviteTeamName").textContent = inv.team;
   syncSidebar();
@@ -1853,6 +1918,11 @@ function resolveInvite(rawKey){
   }).catch(()=>{
     state.inviteKey = null;
     localStorage.removeItem(INVITE_KEY);
+    const ik = $("inviteKeyInput");
+    ik.disabled = false; ik.value = "";
+    const ikHint = $("inviteKeyHint");
+    ikHint.textContent = "Invite key not recognized \u2014 check with your facilitator or continue without a key.";
+    ikHint.classList.remove("inviteOk"); ikHint.classList.add("inviteBad");
     alert("This invite link is no longer valid.");
   });
 }
