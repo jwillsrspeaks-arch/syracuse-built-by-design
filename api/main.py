@@ -399,10 +399,26 @@ def list_invites(x_dashboard_key: Optional[str] = Header(default=None)):
         rows = conn.execute(
             """SELECT i.key, i.team, i.audience_type AS audienceType,
                       i.created_at AS createdAt, i.active,
-                      (SELECT COUNT(*) FROM sessions s WHERE s.invite_key = i.key) AS responses
+                      (SELECT COUNT(*) FROM sessions s WHERE s.invite_key = i.key) AS started,
+                      (SELECT COUNT(*) FROM sessions s WHERE s.invite_key = i.key
+                         AND s.completed_at IS NOT NULL) AS completed
                FROM invites i ORDER BY i.created_at DESC"""
         ).fetchall()
-    return {"invites": [dict(r) for r in rows]}
+        part_rows = conn.execute(
+            """SELECT invite_key, respondent, completed_at FROM sessions
+               WHERE invite_key != '' ORDER BY updated_at ASC"""
+        ).fetchall()
+    by_invite: Dict[str, list] = {}
+    for r in part_rows:
+        name = (json.loads(r["respondent"]).get("name") or "(unnamed)")
+        by_invite.setdefault(r["invite_key"], []).append(
+            {"name": name, "completed": bool(r["completed_at"])})
+    invites = []
+    for r in rows:
+        invite = dict(r)
+        invite["participants"] = by_invite.get(r["key"], [])
+        invites.append(invite)
+    return {"invites": invites}
 
 
 @app.delete("/api/invites/{key}")

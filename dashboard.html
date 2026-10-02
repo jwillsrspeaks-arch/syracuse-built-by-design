@@ -356,20 +356,22 @@
         return;
       }
       list.innerHTML = `<table>
-        <thead><tr><th>Key</th><th>Team</th><th>Audience Lock</th><th>Created</th><th>Responses</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>Key</th><th>Team</th><th>Audience Lock</th><th>Created</th><th>Progress</th><th>Status</th><th></th></tr></thead>
         <tbody>${data.invites.map(i => `
           <tr>
             <td class="progress"><b>${esc(i.key)}</b></td>
             <td>${esc(i.team)}</td>
             <td class="muted">${esc(i.audienceType || "—")}</td>
             <td class="progress">${esc((i.createdAt || "").slice(0, 10))}</td>
-            <td class="progress">${i.responses}</td>
+            <td class="progress">${i.completed || 0} / ${i.started || 0} done</td>
             <td>${i.active ? `<span class="cls ok">active</span>` : `<span class="cls bad">inactive</span>`}</td>
             <td>
+              <button class="viewInvite" data-key="${esc(i.key)}">View</button>
               <button class="copyInvite" data-key="${esc(i.key)}">Copy Link</button>
               ${i.active ? `<button class="deInvite danger" data-key="${esc(i.key)}">Deactivate</button>` : ""}
             </td>
-          </tr>`).join("")}</tbody></table>`;
+          </tr>
+          <tr class="invDetail" style="display:none"><td colspan="7" style="padding:6px 12px 10px">${(i.participants && i.participants.length) ? i.participants.map(p => `<span class="cls ${p.completed ? "ok" : "muted"}" style="margin:2px 8px 2px 0; display:inline-block">${esc(p.name)} \u2014 ${p.completed ? "\u2713 done" : "in progress"}</span>`).join("") : `<span class="muted" style="font-size:12px">No one has started yet \u2014 send them the invite link above.</span>`}</td></tr>`).join("")}</tbody></table>`;
       list.querySelectorAll(".copyInvite").forEach(b => b.onclick = async () => {
         const link = location.origin + "/?key=" + b.dataset.key;
         try{ await navigator.clipboard.writeText(link); }
@@ -380,6 +382,13 @@
         if(!confirm("Deactivate invite " + b.dataset.key + "? New participants can no longer join; those already started keep their results.")) return;
         await fetch("/api/invites/" + b.dataset.key, { method: "DELETE", headers: { "X-Dashboard-Key": key } });
         loadInvites();
+      });
+      list.querySelectorAll(".viewInvite").forEach(b => b.onclick = () => {
+        const detail = b.closest("tr").nextElementSibling;
+        if(!detail || !detail.classList.contains("invDetail")) return;
+        const open = detail.style.display !== "none";
+        detail.style.display = open ? "none" : "";
+        b.textContent = open ? "View" : "Hide";
       });
     }catch(e){ /* dashboard still works if invites fail */ }
   }

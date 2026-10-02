@@ -326,8 +326,10 @@
           </div>
         </div>
 
-        <div id="inviteBanner" class="hidden" style="border:1px solid rgba(215,180,106,.45); background:rgba(215,180,106,.08); border-radius:12px; padding:10px 12px; font-size:13px; margin-bottom:4px">
-          <b>Invited team:</b> <span id="inviteTeamName">—</span> — your team is set automatically; just enter your name and start.
+        <div id="inviteBanner" class="hidden" style="border:2px solid rgba(215,180,106,.55); background:linear-gradient(135deg, rgba(215,180,106,.14), rgba(215,180,106,.04)); border-radius:14px; padding:18px 20px; margin-bottom:14px">
+          <div style="font-size:11px; letter-spacing:.14em; color:#d7b46a; font-weight:700">YOU’VE BEEN INVITED</div>
+          <h3 style="margin:6px 0 6px; font-size:20px">Assessment for <span id="inviteTeamName">—</span></h3>
+          <div style="font-size:14px; opacity:.85">Your team and audience are locked in automatically — just enter your name and start. Your progress saves live as you go.</div>
         </div>
 
         <label>Organization Name</label>
@@ -460,6 +462,21 @@
         </div>
 
         <div class="hint" id="autosaveHint">Autosave is ON.</div>
+      </div>
+
+      <!-- COMPLETION -->
+      <div id="completePanel" class="hidden">
+        <div style="text-align:center; padding:34px 10px">
+          <div style="width:64px; height:64px; margin:0 auto 16px; border-radius:50%; background:rgba(110,167,122,.15); border:2px solid var(--ok); display:flex; align-items:center; justify-content:center; font-size:32px; color:var(--ok)">✓</div>
+          <h2 style="margin:0 0 6px">Assessment Submitted</h2>
+          <div id="completeTeam" style="font-size:15px; opacity:.85"></div>
+          <div class="small" style="margin-top:6px"><span id="completeName"></span> · <span id="completeProg"></span></div>
+          <div class="small" style="margin-top:10px">Every answer has been saved to the server — your facilitator can now see your results in the team report.</div>
+          <div class="btnbar" style="justify-content:center; margin-top:18px">
+            <button id="viewReportBtn">View My Report</button>
+            <button class="secondary" id="backHomeBtn">Back to Start</button>
+          </div>
+        </div>
       </div>
 
       <!-- RESULTS (individual) -->
@@ -1213,7 +1230,8 @@ const tabs = {
   assess: $("assessPanel"),
   results: $("resultsPanel"),
   team: $("teamPanel"),
-  report: $("reportPanel")
+  report: $("reportPanel"),
+  complete: $("completePanel")
 };
 function setTab(name){
   for(const k of Object.keys(tabs)) tabs[k].classList.add("hidden");
@@ -1231,6 +1249,15 @@ $("tabAssess").onclick = ()=>setTab("assess");
 $("tabResults").onclick = ()=>setTab("results");
 $("tabTeam").onclick = ()=>{ refreshTeam(); setTab("team"); };
 $("tabReport").onclick = ()=>{ buildReportFromCurrent(); setTab("report"); };
+
+function showComplete(){
+  $("completeName").textContent = state.respondent.name || "Participant";
+  $("completeTeam").textContent = state.respondent.group ? ("Team: " + state.respondent.group) : "Thank you for taking the BUILT BY DESIGN™ assessment";
+  $("completeProg").textContent = totalAnswered() + " / " + totalQuestions() + " answers saved";
+  setTab("complete");
+}
+$("viewReportBtn").onclick = ()=>{ buildResults(); setTab("results"); };
+$("backHomeBtn").onclick = ()=> setTab("welcome");
 
 function syncSidebar(){
   MODE = effectiveMode();
@@ -1375,7 +1402,7 @@ function next(){
     saveDraft();
     syncToServer(true);
     buildResults();
-    setTab("results");
+    showComplete();
     return;
   }
   saveDraft();

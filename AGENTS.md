@@ -19,7 +19,8 @@ participant session in real time, and `dashboard.html` — a live results dashbo
 - POST /api/export/sheets — same key; posts team-summary + individual rows to a user-owned
   Google Apps Script web app (writes to the user's Google Sheet and returns its URL)
 - GET /api/invite/{key} — public; returns {team, audienceType} for an active invite (404 otherwise)
-- POST /api/invites, GET /api/invites, DELETE /api/invites/{key} — dashboard-key protected invite management
+- POST /api/invites, GET /api/invites, DELETE /api/invites/{key} — dashboard-key protected invite management. GET returns per-invite `started`/`completed` counts + `participants` [{name, completed}] for coach visibility.
+- index.html: invite links show a personalized welcome card; finishing the last question routes to a completion screen (completePanel, showComplete()) before Results.
 - GET /api/healthz
 
 ## Invite workflow
