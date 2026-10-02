@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>BUILT BY DESIGN™ — Live Results Dashboard</title>
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#111824; --panel2:#0f1621; --text:#f2f4f7;
+      --muted:#9aa6b2; --line:rgba(255,255,255,.10); --gold:#d7b46a;
+      --ok:#6ea77a; --warn:#d7b46a; --bad:#b35a5a;
+      --shadow: 0 18px 45px rgba(0,0,0,.45); --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; color:var(--text); font-family:var(--sans); min-height:100vh;
+      background:
+        radial-gradient(1200px 800px at 20% 0%, rgba(215,180,106,.10), transparent 60%),
+        radial-gradient(1000px 700px at 90% 20%, rgba(110,167,122,.08), transparent 55%),
+        linear-gradient(180deg, #070a0f, var(--bg));
+    }
+    .wrap{max-width:1180px; margin:0 auto; padding:28px 18px 80px}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:14px;
+      padding:16px 18px; border:1px solid var(--line); border-radius:18px;
+      background:linear-gradient(180deg, rgba(17,24,36,.86), rgba(10,14,20,.72));
+      box-shadow:var(--shadow); backdrop-filter: blur(10px);
+    }
+    .brand{display:flex; gap:14px; align-items:center}
+    .mark{
+      width:44px; height:44px; border-radius:12px; border:1px solid rgba(215,180,106,.45);
+      background:
+        radial-gradient(circle at 30% 30%, rgba(215,180,106,.30), transparent 60%),
+        linear-gradient(180deg, rgba(215,180,106,.16), rgba(0,0,0,.0));
+      display:grid; place-items:center; font-weight:800; color:var(--gold);
+      font-family:var(--mono); font-size:18px;
+    }
+    .title{font-size:18px; font-weight:800; letter-spacing:.06em}
+    .sub{font-size:12px; color:var(--muted)}
+    .badge{
+      display:inline-flex; align-items:center; gap:8px; padding:6px 12px;
+      border:1px solid var(--line); border-radius:999px; font-size:12px;
+      background:rgba(255,255,255,.03);
+    }
+    .dot{width:9px; height:9px; border-radius:50%; background:var(--bad); display:inline-block}
+    .dot.ok{background:var(--ok)} .dot.live{background:var(--ok); animation:pulse 1.6s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+    .statsRow{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:18px}
+    .stat{
+      background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+      padding:18px; box-shadow:var(--shadow);
+    }
+    .stat .label{font-size:11px; text-transform:uppercase; letter-spacing:.14em; color:var(--muted)}
+    .stat .n{font-size:30px; font-weight:800; margin-top:6px}
+    .teamCard{
+      background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+      padding:18px; margin-top:16px; box-shadow:var(--shadow);
+    }
+    .teamHead{display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap}
+    .teamName{font-weight:800; font-size:16px; color:var(--gold)}
+    .pillars{display:grid; grid-template-columns:repeat(7,1fr); gap:10px; margin-top:12px}
+    .picon{border:1px solid var(--line); border-radius:12px; padding:10px; background:var(--panel2)}
+    .picon .nm{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em}
+    .picon .sc{font-size:18px; font-weight:800; margin-top:2px}
+    .bar{height:6px; border-radius:6px; background:rgba(255,255,255,.08); margin-top:6px; overflow:hidden}
+    .bar > div{height:100%; background:linear-gradient(90deg, var(--gold), #e8cf94)}
+    .distRow{display:flex; align-items:center; gap:10px; margin-top:8px}
+    .distLabel{width:112px; flex:none; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted)}
+    .distBar{flex:1; display:flex; height:22px; border-radius:8px; overflow:hidden; background:rgba(255,255,255,.06)}
+    .distBar > div{min-width:0; overflow:hidden; display:grid; place-items:center; font-size:10.5px; font-weight:700; color:#0b0f14}
+    .distCount{width:30px; flex:none; text-align:right; font-size:11px; font-family:var(--mono); color:var(--muted)}
+    .distLegend{display:flex; gap:14px; flex-wrap:wrap; margin-top:12px; font-size:11px; color:var(--muted)}
+    .distLegend span{display:inline-flex; align-items:center; gap:5px}
+    .distLegend i{width:9px; height:9px; border-radius:3px; display:inline-block}
+    #inviteTeam, #inviteAudience{
+      background:var(--panel2); border:1px solid var(--line); color:var(--text);
+      border-radius:12px; padding:10px 12px; font-size:14px; outline:none;
+    }
+    #inviteTeam:focus, #inviteAudience:focus{ border-color:rgba(215,180,106,.55) }
+    #inviteList button{margin-top:0; padding:6px 10px; font-size:12px}
+    table{width:100%; border-collapse:collapse; margin-top:12px; font-size:13px}
+    th,td{padding:9px 10px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap}
+    th{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted)}
+    td.progress{font-family:var(--mono)}
+    .cls{padding:3px 10px; border-radius:999px; font-size:11px; border:1px solid var(--line)}
+    .cls.ok{color:var(--ok); border-color:rgba(110,167,122,.5)}
+    .cls.warn{color:var(--gold); border-color:rgba(215,180,106,.5)}
+    .cls.bad{color:var(--bad); border-color:rgba(179,90,90,.5)}
+    .muted{color:var(--muted)}
+    .empty{
+      text-align:center; padding:60px 20px; color:var(--muted);
+      border:1px dashed var(--line); border-radius:var(--radius); margin-top:18px;
+    }
+    .gate{
+      max-width:420px; margin:80px auto; padding:28px; text-align:center;
+      background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+    input[type="password"]{
+      width:100%; padding:12px 14px; margin-top:14px; border-radius:12px;
+      border:1px solid var(--line); background:var(--panel2); color:var(--text); font-size:14px;
+    }
+    button{
+      padding:11px 22px; margin-top:14px; border-radius:12px; cursor:pointer;
+      border:1px solid rgba(215,180,106,.45); background:linear-gradient(180deg, rgba(215,180,106,.2), rgba(215,180,106,.08));
+      color:var(--text); font-weight:700; font-size:14px;
+    }
+    button:hover{filter:brightness(1.15)}
+    .err{color:var(--bad); font-size:13px; margin-top:10px; min-height:16px}
+    .updated{font-size:11px; color:var(--muted)}
+    @media (max-width:900px){ .statsRow{grid-template-columns:repeat(2,1fr)} .pillars{grid-template-columns:repeat(4,1fr)} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="mark">BbD</div>
+        <div>
+          <div class="title">BUILT BY DESIGN™ — LIVE RESULTS</div>
+          <div class="sub">Assessment responses captured in real time · grouped by team</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+        <div class="badge"><span class="dot" id="liveDot"></span><span id="liveText">Connecting…</span></div>
+        <button id="reportBtn" style="margin-top:0">Download Report</button>
+        <button id="sheetsBtn" style="margin-top:0">Export to Sheets</button>
+      </div>
+    </div>
+
+    <div id="gate" class="gate">
+      <div class="title" style="margin-bottom:6px">Dashboard Access</div>
+      <div class="sub">Enter your dashboard passcode to view live results.</div>
+      <input type="password" id="keyInput" placeholder="Dashboard passcode"/>
+      <button id="unlockBtn">Unlock Dashboard</button>
+      <div class="err" id="gateErr"></div>
+    </div>
+
+    <div id="board" style="display:none">
+      <div class="statsRow">
+        <div class="stat"><div class="label">Participants</div><div class="n" id="stParticipants">0</div></div>
+        <div class="stat"><div class="label">Completed</div><div class="n" id="stCompleted">0</div></div>
+        <div class="stat"><div class="label">In Progress</div><div class="n" id="stInProgress">0</div></div>
+        <div class="stat"><div class="label">Teams</div><div class="n" id="stTeams">0</div></div>
+      </div>
+      <div id="inviteCard" class="teamCard">
+        <div class="teamHead">
+          <div class="teamName">Team Invites</div>
+          <div class="muted" style="font-size:11px">send each team its link + key — participants join automatically</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px">
+          <input id="inviteTeam" placeholder="Team name (e.g., Varsity)" style="flex:1; min-width:200px"/>
+          <select id="inviteAudience">
+            <option value="">Audience type (optional lock)</option>
+            <option value="School District">School District</option>
+            <option value="School">School</option>
+            <option value="Athletic Program">Athletic Program</option>
+            <option value="Business">Business</option>
+            <option value="Nonprofit">Nonprofit</option>
+            <option value="Church">Church</option>
+          </select>
+          <button id="createInviteBtn">Create Invite</button>
+        </div>
+        <div id="inviteList" style="margin-top:12px"></div>
+      </div>
+      <div id="distCard" class="teamCard" style="display:none">
+        <div class="teamHead"><div class="teamName">Pillar Score Distribution — All Participants</div><div class="muted" style="font-size:11px">participants per condition band, 0–70 scale</div></div>
+        <div id="distChart" style="margin-top:10px"></div>
+        <div class="distLegend">
+          <span><i style="background:var(--bad)"></i>Fragile (0–34)</span>
+          <span><i style="background:#c97a4a"></i>Unstable (35–48)</span>
+          <span><i style="background:var(--warn)"></i>Reinforcing (49–62)</span>
+          <span><i style="background:var(--ok)"></i>Load-Bearing (63–70)</span>
+        </div>
+      </div>
+      <div id="teams"></div>
+      <div class="updated" id="lastUpdated"></div>
+    </div>
+  </div>
+
+<script>
+  const POLL_MS = 3000;
+  let key = sessionStorage.getItem("bbd_dash_key") || "";
+  let timer = null;
+
+  function clsClass(c){
+    if(c === "Built by Design") return "ok";
+    if(c === "Under Construction") return "warn";
+    return "bad";
+  }
+  function esc(s){ const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; }
+
+  function fmtTime(iso){
+    if(!iso) return "—";
+    try{ return new Date(iso).toLocaleTimeString(); }catch(e){ return "—"; }
+  }
+
+  function pillarChart(t){
+    const entries = Object.entries(t.avgPillars);
+    if(!entries.length) return "";
+    const spread = t.participants.map(p => p.pillarScores || {});
+    const W = 640, H = 190, pad = 30, top = 30, base = H - 34;
+    const bw = (W - pad * 2) / entries.length;
+    const y = v => base - (v / 70) * (base - top);
+    const maxV = Math.max(...entries.map(e => e[1]));
+    const minV = Math.min(...entries.map(e => e[1]));
+    let bars = "", ranges = "";
+    entries.forEach(([k, v], i) => {
+      const cx = pad + i * bw + bw / 2, x = cx - bw * 0.32, w = bw * 0.64;
+      const lows = spread.map(s => s[k]).filter(n => typeof n === "number");
+      const lo = lows.length ? Math.min(...lows) : v, hi = lows.length ? Math.max(...lows) : v;
+      const color = v === maxV && maxV !== minV ? "var(--ok)" : v === minV && maxV !== minV ? "var(--bad)" : "var(--gold)";
+      bars += `
+        <rect x="${x.toFixed(1)}" y="${y(v).toFixed(1)}" width="${w.toFixed(1)}" height="${(base - y(v)).toFixed(1)}" rx="6" fill="${color}" opacity=".8"/>
+        <text x="${cx.toFixed(1)}" y="${(y(v) - 6).toFixed(1)}" text-anchor="middle" font-size="11.5" font-weight="700" fill="${color}">${v.toFixed(1)}</text>
+        <text x="${cx.toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="9" letter-spacing=".08em" fill="var(--muted)">${esc(k.toUpperCase())}</text>`;
+      if(lows.length > 1 && hi > lo){
+        ranges += `
+          <line x1="${cx}" y1="${y(hi).toFixed(1)}" x2="${cx}" y2="${y(lo).toFixed(1)}" stroke="rgba(255,255,255,.35)" stroke-width="1.5"/>
+          <line x1="${(cx-5).toFixed(1)}" y1="${y(hi).toFixed(1)}" x2="${(cx+5).toFixed(1)}" y2="${y(hi).toFixed(1)}" stroke="rgba(255,255,255,.35)"/>
+          <line x1="${(cx-5).toFixed(1)}" y1="${y(lo).toFixed(1)}" x2="${(cx+5).toFixed(1)}" y2="${y(lo).toFixed(1)}" stroke="rgba(255,255,255,.35)"/>`;
+      }
+    });
+    return `
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;margin-top:14px" role="img" aria-label="Average participant score per pillar">
+        <line x1="${pad}" y1="${base}" x2="${W - pad}" y2="${base}" stroke="var(--line)"/>
+        ${ranges}${bars}
+      </svg>
+      <div class="muted" style="font-size:11px;margin-top:4px">Average score per pillar (0–70) · whiskers show lowest–highest participant · <span style="color:var(--ok)">green</span> = team strength · <span style="color:var(--bad)">red</span> = growth area</div>`;
+  }
+
+  let lastData = null;
+
+  function pillarBand(v){
+    return v >= 63 ? "Load-Bearing" : v >= 49 ? "Reinforcing" : v >= 35 ? "Unstable" : "Fragile";
+  }
+
+  function buildReportHtml(d){
+    const gen = new Date().toLocaleString();
+    const clsBadge = c => `<span class="cb ${clsClass(c)}">${esc(c)}</span>`;
+    const teams = d.teams.map(t => {
+      const pillarRows = Object.entries(t.avgPillars).map(([k, v]) => `
+        <tr><td class="pk">${esc(k)}</td>
+        <td style="width:45%"><div class="rbar"><div style="width:${(v/70)*100}%"></div></div></td>
+        <td class="mono">${v.toFixed(1)} / 70</td>
+        <td>${pillarBand(v)}</td></tr>`).join("");
+      const rows = t.participants.map(p => `
+        <tr><td>${esc(p.name)}</td><td>${esc(p.role)}</td><td>${esc(p.unit)}</td>
+        <td class="mono">${p.answered} / ${p.totalQuestions}</td>
+        <td>${p.completedAt ? esc(p.total) + " / 490" : `<span class="muted">in progress</span>`}</td>
+        <td>${p.classification ? clsBadge(p.classification) : `<span class="muted">—</span>`}</td></tr>`).join("");
+      const clsBadges = Object.entries(t.classificationCounts)
+        .map(([c, n]) => clsBadge(c) + ` × ${n}`).join(" ");
+      return `<section class="team">
+        <h2>${esc(t.team)}</h2>
+        <p class="meta">${t.participantCount} participant(s) · avg total <b>${t.avgTotal.toFixed(1)} / 490</b> ${clsBadges}</p>
+        <h3>Pillar Scores</h3>
+        <table><thead><tr><th>Pillar</th><th>Average</th><th>Score</th><th>Condition</th></tr></thead><tbody>${pillarRows}</tbody></table>
+        <h3>Participants</h3>
+        <table><thead><tr><th>Name</th><th>Role</th><th>Unit</th><th>Progress</th><th>Total</th><th>Classification</th></tr></thead><tbody>${rows}</tbody></table>
+      </section>`;
+    }).join("");
+    return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>BUILT BY DESIGN™ — Team Results Report</title>
+<style>
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:#1a1d21; margin:36px auto; max-width:900px; padding:0 20px; line-height:1.5}
+  h1{font-size:20px; letter-spacing:.06em; margin:0}
+  .head{border-bottom:3px solid #c9a24b; padding-bottom:14px; margin-bottom:20px}
+  .head .sub{color:#667; font-size:12px}
+  .summary{display:flex; gap:18px; flex-wrap:wrap; margin-bottom:26px}
+  .summary div{border:1px solid #e2e2e2; border-radius:10px; padding:10px 16px}
+  .summary .n{font-size:22px; font-weight:800}
+  .summary .l{font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:#667}
+  h2{font-size:16px; color:#8a6d1f; margin:26px 0 4px}
+  h3{font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:#667; margin:18px 0 6px}
+  .meta{font-size:13px; color:#555; margin:0 0 4px}
+  table{width:100%; border-collapse:collapse; font-size:13px}
+  th,td{padding:8px 10px; border-bottom:1px solid #e5e5e5; text-align:left}
+  th{font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:#667}
+  .pk{text-transform:capitalize}
+  .mono{font-variant-numeric:tabular-nums; white-space:nowrap}
+  .cb{padding:2px 10px; border-radius:999px; font-size:11px; border:1px solid; white-space:nowrap}
+  .cb.ok{color:#2e6e43; border-color:#2e6e43}
+  .cb.warn{color:#8a6d1f; border-color:#8a6d1f}
+  .cb.bad{color:#a33a3a; border-color:#a33a3a}
+  .rbar{height:8px; background:#eee; border-radius:6px; overflow:hidden}
+  .rbar > div{height:100%; background:linear-gradient(90deg,#c9a24b,#e3c88b)}
+  .muted{color:#888}
+  .team{page-break-inside:avoid}
+  .foot{margin-top:36px; font-size:11px; color:#888; border-top:1px solid #e5e5e5; padding-top:10px}
+  @media print{ body{margin:0} }
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>BUILT BY DESIGN™ — TEAM RESULTS REPORT</h1>
+    <div class="sub">Organizational culture assessment · generated ${gen}</div>
+  </div>
+  <div class="summary">
+    <div><div class="n">${d.summary.participants}</div><div class="l">Participants</div></div>
+    <div><div class="n">${d.summary.completed}</div><div class="l">Completed</div></div>
+    <div><div class="n">${d.summary.inProgress}</div><div class="l">In Progress</div></div>
+    <div><div class="n">${d.summary.teams}</div><div class="l">Teams</div></div>
+  </div>
+  ${teams || `<p class="muted">No team data yet.</p>`}
+  <div class="foot">Pillar scores are 0–70 (10 items × 5-point scale, weighted ×1.4); total score is 0–490. Conditions: Fragile &lt;35 · Unstable 35–48 · Reinforcing 49–62 · Load-Bearing 63–70. Generated from live dashboard data at time of download.</div>
+</body>
+</html>`;
+  }
+
+  const PILLAR_ORDER = ["intention","structure","standards","execution","stewardship","adaptability","succession"];
+  const BANDS = [
+    { label: "Fragile (0–34)",       color: "var(--bad)",  test: v => v < 35 },
+    { label: "Unstable (35–48)",     color: "#c97a4a",     test: v => v >= 35 && v < 49 },
+    { label: "Reinforcing (49–62)",  color: "var(--warn)", test: v => v >= 49 && v < 63 },
+    { label: "Load-Bearing (63–70)", color: "var(--ok)",   test: v => v >= 63 },
+  ];
+
+  function renderDistribution(data){
+    const card = document.getElementById("distCard");
+    const participants = data.teams.flatMap(t => t.participants);
+    if(!participants.length){ card.style.display = "none"; return; }
+    const keys = data.teams[0] && Object.keys(data.teams[0].avgPillars).length
+      ? Object.keys(data.teams[0].avgPillars) : PILLAR_ORDER;
+    const html = keys.map(k => {
+      const vals = participants.map(p => (p.pillarScores || {})[k]).filter(n => typeof n === "number");
+      const segs = BANDS.map(b => {
+        const n = vals.filter(b.test).length;
+        const pct = vals.length ? (n / vals.length) * 100 : 0;
+        return `<div style="flex:${pct.toFixed(2)};background:${b.color}" title="${b.label}: ${n} participant(s)">${n || ""}</div>`;
+      }).join("");
+      return `<div class="distRow">
+        <div class="distLabel">${esc(k)}</div>
+        <div class="distBar">${segs || '<div style="flex:1"></div>'}</div>
+        <div class="distCount">${vals.length}</div>
+      </div>`;
+    }).join("");
+    document.getElementById("distChart").innerHTML = html;
+    card.style.display = "";
+  }
+
+  async function loadInvites(){
+    try{
+      const res = await fetch("/api/invites", { headers: { "X-Dashboard-Key": key } });
+      if(!res.ok) return;
+      const data = await res.json();
+      const list = document.getElementById("inviteList");
+      if(!data.invites.length){
+        list.innerHTML = `<div class="muted" style="font-size:12px">No invites yet — create one, then email the copied link to the team.</div>`;
+        return;
+      }
+      list.innerHTML = `<table>
+        <thead><tr><th>Key</th><th>Team</th><th>Audience Lock</th><th>Created</th><th>Progress</th><th>Status</th><th></th></tr></thead>
+        <tbody>${data.invites.map(i => `
+          <tr>
+            <td class="progress"><b>${esc(i.key)}</b></td>
+            <td>${esc(i.team)}</td>
+            <td class="muted">${esc(i.audienceType || "—")}</td>
+            <td class="progress">${esc((i.createdAt || "").slice(0, 10))}</td>
+            <td class="progress">${i.completed || 0} / ${i.started || 0} done</td>
+            <td>${i.active ? `<span class="cls ok">active</span>` : `<span class="cls bad">inactive</span>`}</td>
+            <td>
+              <button class="viewInvite" data-key="${esc(i.key)}">View</button>
+              <button class="copyInvite" data-key="${esc(i.key)}">Copy Link</button>
+              ${i.active ? `<button class="deInvite danger" data-key="${esc(i.key)}">Deactivate</button>` : ""}
+            </td>
+          </tr>
+          <tr class="invDetail" style="display:none"><td colspan="7" style="padding:6px 12px 10px">${(i.participants && i.participants.length) ? i.participants.map(p => `<span class="cls ${p.completed ? "ok" : "muted"}" style="margin:2px 8px 2px 0; display:inline-block">${esc(p.name)} \u2014 ${p.completed ? "\u2713 done" : "in progress"}</span>`).join("") : `<span class="muted" style="font-size:12px">No one has started yet \u2014 send them the invite link above.</span>`}</td></tr>`).join("")}</tbody></table>`;
+      list.querySelectorAll(".copyInvite").forEach(b => b.onclick = async () => {
+        const link = location.origin + "/?key=" + b.dataset.key;
+        try{ await navigator.clipboard.writeText(link); }
+        catch(e){ prompt("Copy this invite link:", link); }
+        alert("Invite link copied to clipboard:\n" + link + "\n\nKey: " + b.dataset.key);
+      });
+      list.querySelectorAll(".deInvite").forEach(b => b.onclick = async () => {
+        if(!confirm("Deactivate invite " + b.dataset.key + "? New participants can no longer join; those already started keep their results.")) return;
+        await fetch("/api/invites/" + b.dataset.key, { method: "DELETE", headers: { "X-Dashboard-Key": key } });
+        loadInvites();
+      });
+      list.querySelectorAll(".viewInvite").forEach(b => b.onclick = () => {
+        const detail = b.closest("tr").nextElementSibling;
+        if(!detail || !detail.classList.contains("invDetail")) return;
+        const open = detail.style.display !== "none";
+        detail.style.display = open ? "none" : "";
+        b.textContent = open ? "View" : "Hide";
+      });
+    }catch(e){ /* dashboard still works if invites fail */ }
+  }
+
+  document.getElementById("createInviteBtn").onclick = async () => {
+    const input = document.getElementById("inviteTeam");
+    const team = input.value.trim();
+    if(!team){ alert("Enter a team name first."); return; }
+    const btn = document.getElementById("createInviteBtn");
+    btn.disabled = true;
+    try{
+      const res = await fetch("/api/invites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Dashboard-Key": key },
+        body: JSON.stringify({ team, audienceType: document.getElementById("inviteAudience").value })
+      });
+      const body = await res.json().catch(() => ({}));
+      if(!res.ok){ alert("Could not create invite: " + (body.detail || ("HTTP " + res.status))); return; }
+      input.value = "";
+      document.getElementById("inviteAudience").value = "";
+      await loadInvites();
+      const link = location.origin + "/?key=" + body.key;
+      try{ await navigator.clipboard.writeText(link); }catch(e){}
+      alert(`Invite created for "${team}".\n\nKey: ${body.key}\nLink (copied to clipboard): ${link}\n\nEmail this link to the team.`);
+    }finally{
+      btn.disabled = false;
+    }
+  };
+
+  function render(data){
+    lastData = data;
+    document.getElementById("gate").style.display = "none";
+    const board = document.getElementById("board");
+    board.style.display = "";
+
+    document.getElementById("stParticipants").textContent = data.summary.participants;
+    document.getElementById("stCompleted").textContent = data.summary.completed;
+    document.getElementById("stInProgress").textContent = data.summary.inProgress;
+    document.getElementById("stTeams").textContent = data.summary.teams;
+
+    renderDistribution(data);
+
+    const wrap = document.getElementById("teams");
+    wrap.innerHTML = "";
+
+    if(!data.teams.length){
+      wrap.innerHTML = `<div class="empty">No responses yet. As soon as someone starts the assessment, their answers appear here — saved on every navigation step.</div>`;
+    }
+
+    for(const t of data.teams){
+      const card = document.createElement("div");
+      card.className = "teamCard";
+      const pillars = Object.entries(t.avgPillars).map(([k, v]) => `
+        <div class="picon">
+          <div class="nm">${esc(k)}</div>
+          <div class="sc">${v.toFixed(1)}<span class="muted" style="font-size:11px">/70</span></div>
+          <div class="bar"><div style="width:${(v/70)*100}%"></div></div>
+        </div>`).join("");
+      const rows = t.participants.map(p => `
+        <tr>
+          <td><b>${esc(p.name)}</b><div class="muted" style="font-size:11px">${esc(p.title || p.role)}</div></td>
+          <td>${esc(p.role)}</td>
+          <td>${esc(p.unit)}</td>
+          <td class="progress">${p.answered} / ${p.totalQuestions}</td>
+          <td>${p.completedAt ? esc(p.total) + " / 490" : `<span class="muted">in progress</span>`}</td>
+          <td>${p.classification ? `<span class="cls ${clsClass(p.classification)}">${esc(p.classification)}</span>` : `<span class="muted">—</span>`}</td>
+          <td class="progress">${fmtTime(p.updatedAt)}</td>
+        </tr>`).join("");
+      const clsBadges = Object.entries(t.classificationCounts)
+        .map(([c, n]) => `<span class="cls ${clsClass(c)}">${esc(c)} × ${n}</span>`).join(" ");
+      card.innerHTML = `
+        <div class="teamHead">
+          <div class="teamName">${esc(t.team)}</div>
+          <div>${t.participantCount} participant(s) · avg total <b>${t.avgTotal.toFixed(1)}</b> / 490 ${clsBadges}</div>
+        </div>
+        <div class="pillars">${pillars}</div>
+        ${pillarChart(t)}
+        <table>
+          <thead><tr><th>Name</th><th>Role</th><th>Unit</th><th>Progress</th><th>Total</th><th>Classification</th><th>Last Save</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+      wrap.appendChild(card);
+    }
+
+    document.getElementById("lastUpdated").textContent =
+      `Updated ${new Date().toLocaleTimeString()} · auto-refreshes every ${POLL_MS/1000}s`;
+  }
+
+  async function poll(){
+    try{
+      const res = await fetch("/api/dashboard", { headers: { "X-Dashboard-Key": key } });
+      if(res.status === 401){
+        sessionStorage.removeItem("bbd_dash_key");
+        key = "";
+        showGate("Passcode rejected. Try again.");
+        return;
+      }
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      document.getElementById("liveDot").className = "dot live";
+      document.getElementById("liveText").textContent = "Live";
+      if(!lastData) loadInvites();
+      render(await res.json());
+    }catch(e){
+      document.getElementById("liveDot").className = "dot";
+      document.getElementById("liveText").textContent = "Reconnecting…";
+    }
+  }
+
+  function showGate(err){
+    document.getElementById("board").style.display = "none";
+    document.getElementById("gate").style.display = "";
+    document.getElementById("gateErr").textContent = err || "";
+  }
+
+  function unlock(){
+    key = document.getElementById("keyInput").value.trim();
+    if(!key) { document.getElementById("gateErr").textContent = "Enter a passcode."; return; }
+    sessionStorage.setItem("bbd_dash_key", key);
+    poll();
+  }
+
+  document.getElementById("unlockBtn").onclick = unlock;
+  document.getElementById("keyInput").addEventListener("keydown", e => { if(e.key === "Enter") unlock(); });
+
+  document.getElementById("sheetsBtn").onclick = async () => {
+    const btn = document.getElementById("sheetsBtn");
+    btn.disabled = true; btn.textContent = "Exporting…";
+    try{
+      const res = await fetch("/api/export/sheets", { method: "POST", headers: { "X-Dashboard-Key": key } });
+      const body = await res.json().catch(() => ({}));
+      if(res.status === 503){
+        alert("Google Sheets export isn't configured yet.\n\n" + (body.detail || "Set the GOOGLE_APPS_SCRIPT_URL and GOOGLE_APPS_SCRIPT_TOKEN secrets first."));
+        return;
+      }
+      if(!res.ok){
+        alert("Export failed: " + (body.detail || ("HTTP " + res.status)));
+        return;
+      }
+      if(body.spreadsheetUrl) window.open(body.spreadsheetUrl, "_blank", "noopener");
+      alert(`Exported ${body.teamRows} team row(s) and ${body.individualRows} individual row(s) to your Google Sheet.`);
+    }catch(e){
+      alert("Export failed: " + e);
+    }finally{
+      btn.disabled = false; btn.textContent = "Export to Sheets";
+    }
+  };
+
+  document.getElementById("reportBtn").onclick = () => {
+    if(!lastData) return;
+    const blob = new Blob([buildReportHtml(lastData)], { type: "text/html" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `BbD-Team-Results-${new Date().toISOString().slice(0,10)}.html`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
+
+  if(key){
+    poll();
+  }
+  timer = setInterval(() => { if(key) poll(); }, POLL_MS);
+</script>
+</body>
+</html>
