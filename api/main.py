@@ -6,6 +6,8 @@ serves aggregated results for the live dashboard.
 import json
 import os
 import sqlite3
+import urllib.error
+import urllib.request
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -194,9 +196,7 @@ def require_dashboard_key(x_dashboard_key: Optional[str]):
         raise HTTPException(status_code=401, detail="Invalid dashboard key.")
 
 
-@app.get("/api/dashboard")
-def dashboard(x_dashboard_key: Optional[str] = Header(default=None)):
-    require_dashboard_key(x_dashboard_key)
+def build_dashboard_payload():
 
     with db() as conn:
         rows = conn.execute(
@@ -262,4 +262,74 @@ def dashboard(x_dashboard_key: Optional[str] = Header(default=None)):
             "teams": len(team_payload),
         },
         "teams": team_payload,
+    }
+
+
+@app.get("/api/dashboard")
+def dashboard(x_dashboard_key: Optional[str] = Header(default=None)):
+    require_dashboard_key(x_dashboard_key)
+    return build_dashboard_payload()
+
+
+def _sheets_export_rows(data):
+    """Flat rows for Google Sheets: team aggregates + individual scores."""
+    pillar_cols = [k.capitalize() for k in PILLAR_KEYS]
+    generated = data["generatedAt"]
+    team_rows = [["Team", "Participants", "Avg Total (of 490)", "Classification Counts"]
+                 + pillar_cols + ["Generated"]]
+    for t in data["teams"]:
+        cls_txt = ", ".join(f"{c} × {n}" for c, n in t["classificationCounts"].items())
+        team_rows.append(
+            [t["team"], t["participantCount"], t["avgTotal"], cls_txt]
+            + [t["avgPillars"][k] for k in PILLAR_KEYS] + [generated])
+    ind_rows = [["Name", "Team", "Role", "Unit", "Answered", "Total Questions",
+                 "Total (of 490)", "Classification"] + pillar_cols + ["Last Save", "Generated"]]
+    for t in data["teams"]:
+        for p in t["participants"]:
+            ind_rows.append(
+                [p["name"], t["team"], p["role"], p["unit"], p["answered"],
+                 p["totalQuestions"], p["total"], p["classification"]]
+                + [p["pillarScores"].get(k, "") for k in PILLAR_KEYS]
+                + [p["updatedAt"], generated])
+    return team_rows, ind_rows
+
+
+@app.post("/api/export/sheets")
+def export_sheets(x_dashboard_key: Optional[str] = Header(default=None)):
+    require_dashboard_key(x_dashboard_key)
+    script_url = os.environ.get("GOOGLE_APPS_SCRIPT_URL", "").strip()
+    script_token = os.environ.get("GOOGLE_APPS_SCRIPT_TOKEN", "")
+    if not script_url or not script_token:
+        raise HTTPException(
+            status_code=503,
+            detail=("Google Sheets export is not configured yet. Set the "
+                    "GOOGLE_APPS_SCRIPT_URL and GOOGLE_APPS_SCRIPT_TOKEN secrets "
+                    "(a Google Apps Script web app deployed from your spreadsheet)."))
+    data = build_dashboard_payload()
+    team_rows, ind_rows = _sheets_export_rows(data)
+    body = json.dumps({
+        "token": script_token,
+        "teamSummary": team_rows,
+        "individualScores": ind_rows,
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        script_url, data=body,
+        headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            result = json.loads(resp.read().decode("utf-8") or "{}")
+    except urllib.error.HTTPError as e:
+        raise HTTPException(status_code=502,
+                            detail=f"Google Apps Script returned HTTP {e.code}.")
+    except Exception:
+        raise HTTPException(status_code=502,
+                            detail="Could not reach the Google Apps Script web app.")
+    if not result.get("ok"):
+        raise HTTPException(status_code=502,
+                            detail=f"Apps Script rejected the export: {result.get('error', 'unknown error')}")
+    return {
+        "ok": True,
+        "spreadsheetUrl": result.get("url", ""),
+        "teamRows": len(team_rows) - 1,
+        "individualRows": len(ind_rows) - 1,
     }

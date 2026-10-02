@@ -112,6 +112,7 @@
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
         <div class="badge"><span class="dot" id="liveDot"></span><span id="liveText">Connecting…</span></div>
         <button id="reportBtn" style="margin-top:0">Download Report</button>
+        <button id="sheetsBtn" style="margin-top:0">Export to Sheets</button>
       </div>
     </div>
 
@@ -360,6 +361,29 @@
 
   document.getElementById("unlockBtn").onclick = unlock;
   document.getElementById("keyInput").addEventListener("keydown", e => { if(e.key === "Enter") unlock(); });
+
+  document.getElementById("sheetsBtn").onclick = async () => {
+    const btn = document.getElementById("sheetsBtn");
+    btn.disabled = true; btn.textContent = "Exporting…";
+    try{
+      const res = await fetch("/api/export/sheets", { method: "POST", headers: { "X-Dashboard-Key": key } });
+      const body = await res.json().catch(() => ({}));
+      if(res.status === 503){
+        alert("Google Sheets export isn't configured yet.\n\n" + (body.detail || "Set the GOOGLE_APPS_SCRIPT_URL and GOOGLE_APPS_SCRIPT_TOKEN secrets first."));
+        return;
+      }
+      if(!res.ok){
+        alert("Export failed: " + (body.detail || ("HTTP " + res.status)));
+        return;
+      }
+      if(body.spreadsheetUrl) window.open(body.spreadsheetUrl, "_blank", "noopener");
+      alert(`Exported ${body.teamRows} team row(s) and ${body.individualRows} individual row(s) to your Google Sheet.`);
+    }catch(e){
+      alert("Export failed: " + e);
+    }finally{
+      btn.disabled = false; btn.textContent = "Export to Sheets";
+    }
+  };
 
   document.getElementById("reportBtn").onclick = () => {
     if(!lastData) return;
