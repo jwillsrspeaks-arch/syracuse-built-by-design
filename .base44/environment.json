@@ -1,0 +1,28 @@
+{
+  "previewPort": 3000,
+  "healthPath": "/",
+  "startCommand": "docker compose -f docker-compose.base44.yml up -d",
+  "secrets": [
+    {
+      "name": "DASHBOARD_PASSWORD",
+      "description": "Passcode for the live results dashboard at /dashboard (chosen by the user in the Secrets page).",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "GOOGLE_APPS_SCRIPT_URL",
+      "description": "Web-app URL of the Google Apps Script the user deployed from their own spreadsheet (Deploy > New deployment > Web app; execute as Me, access Anyone). Used by POST /api/export/sheets.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "GOOGLE_APPS_SCRIPT_TOKEN",
+      "description": "Shared token the user invented; the same value must be pasted into the TOKEN line of the Apps Script so the sheet rejects other writers.",
+      "requiredAtBoot": false
+    }
+  ],
+  "production": {
+    "composeFile": "docker-compose.prod.yml",
+    "envTemplate": ".env.example",
+    "docs": "DEPLOYMENT.md",
+    "note": "Prod uses repo .env for secrets (DASHBOARD_PASSWORD required, Sheets export optional). TLS terminates in a host-level reverse proxy."
+  }
+}
